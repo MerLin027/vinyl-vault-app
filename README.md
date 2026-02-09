@@ -1,4 +1,4 @@
-# my_app
+# VinylVault
 
 A new Flutter project.
 

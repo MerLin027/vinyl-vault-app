@@ -1,3 +1,4 @@
+// VinylVault - Vinyl Record Collection Management App
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatelessWidget {
