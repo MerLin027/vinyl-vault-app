@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../login/login_screen.dart';
+
 // ─── Colors extracted directly from HTML/CSS ──────────────────────────────────
 // background-dark / vinyl-dark: #111211
 const Color _colorBackground = Color(0xFF111211);
@@ -30,7 +32,82 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
+  // ── Animation controllers ────────────────────────────────────────────────
+  late final AnimationController _loadController;
+  late final AnimationController _spinController;
+  late final AnimationController _entryController;
+
+  // ── Derived animations ───────────────────────────────────────────────────
+  late final Animation<double> _loadAnimation;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Loading bar: 0.0 → 1.0 over 2.5 s with easeInOut curve
+    _loadController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2500),
+    );
+    _loadAnimation = CurvedAnimation(
+      parent: _loadController,
+      curve: Curves.easeInOut,
+    );
+
+    // Vinyl rotation: continuous single turn every 4 s
+    _spinController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat();
+
+    // Entry animations: fade + slide over 800 ms
+    _entryController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _entryController,
+      curve: Curves.easeIn,
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _entryController,
+      curve: Curves.easeOut,
+    ));
+
+    // Kick off entry and loading bar simultaneously
+    _entryController.forward();
+    _loadController.forward();
+
+    // After the loading bar completes, wait 300 ms then navigate
+    _loadController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+            );
+          }
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _loadController.dispose();
+    _spinController.dispose();
+    _entryController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,68 +137,77 @@ class _SplashScreenState extends State<SplashScreen> {
                       ),
                     ),
 
-                    // ── Main vertically centered content: record + wordmark ──
+                    // ── Main vertically centered content: fade in + slide up ──
                     Positioned.fill(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // ── Vinyl record illustration ──────────────────────────────
-                          SizedBox(
-                            // w-64 = 256px on mobile
-                            width: 256,
-                            height: 256,
-                            child: CustomPaint(
-                              painter: _VinylRecordPainter(),
-                            ),
-                          ),
-
-                          // mb-12 = 48px gap beneath record
-                          const SizedBox(height: 48),
-
-                          // ── Wordmark and tagline ─────────────────────────────────
-                          Padding(
-                            // px-6 = 24px horizontal
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 24.0),
-                            child: Column(
-                              children: [
-                                // App name: text-4xl(36px), font-extrabold(800),
-                                // tracking-[0.1em], uppercase
-                                Text(
-                                  'VINYLVAULT',
-                                  style: GoogleFonts.manrope(
-                                    color: _colorOffWhite,
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.w800,
-                                    // tracking-[0.1em] → 36 × 0.1 = 3.6
-                                    letterSpacing: 3.6,
-                                    // leading-tight ≈ 1.25
-                                    height: 1.25,
+                      child: FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // ── Vinyl record illustration (continuously rotating) ──
+                              RotationTransition(
+                                turns: _spinController,
+                                child: SizedBox(
+                                  // w-64 = 256px on mobile
+                                  width: 256,
+                                  height: 256,
+                                  child: CustomPaint(
+                                    painter: _VinylRecordPainter(),
                                   ),
-                                  textAlign: TextAlign.center,
                                 ),
+                              ),
 
-                                // mb-2 = 8px gap
-                                const SizedBox(height: 8),
+                              // mb-12 = 48px gap beneath record
+                              const SizedBox(height: 48),
 
-                                // Tagline: text-lg(18px), font-light(300),
-                                // tracking-wide(0.025em), italic, off-white/70
-                                Text(
-                                  'Your curated record collection',
-                                  style: GoogleFonts.manrope(
-                                    color: _colorOffWhite70,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w300,
-                                    // tracking-wide → 18 × 0.025 = 0.45
-                                    letterSpacing: 0.45,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                  textAlign: TextAlign.center,
+                              // ── Wordmark and tagline ───────────────────────────────
+                              Padding(
+                                // px-6 = 24px horizontal
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24.0),
+                                child: Column(
+                                  children: [
+                                    // App name: text-4xl(36px), font-extrabold(800),
+                                    // tracking-[0.1em], uppercase
+                                    Text(
+                                      'VINYLVAULT',
+                                      style: GoogleFonts.manrope(
+                                        color: _colorOffWhite,
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.w800,
+                                        // tracking-[0.1em] → 36 × 0.1 = 3.6
+                                        letterSpacing: 3.6,
+                                        // leading-tight ≈ 1.25
+                                        height: 1.25,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+
+                                    // mb-2 = 8px gap
+                                    const SizedBox(height: 8),
+
+                                    // Tagline: text-lg(18px), font-light(300),
+                                    // tracking-wide(0.025em), italic, off-white/70
+                                    Text(
+                                      'Your curated record collection',
+                                      style: GoogleFonts.manrope(
+                                        color: _colorOffWhite70,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w300,
+                                        // tracking-wide → 18 × 0.025 = 0.45
+                                        letterSpacing: 0.45,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
 
@@ -136,56 +222,65 @@ class _SplashScreenState extends State<SplashScreen> {
                           constraints: const BoxConstraints(maxWidth: 320),
                           padding:
                               const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Label row: "Syncing Library" + "68%"
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.end,
+                          child: AnimatedBuilder(
+                            animation: _loadAnimation,
+                            builder: (context, child) {
+                              final percent =
+                                  (_loadAnimation.value * 100).round();
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Progress label: text-xs(12px), font-medium(500),
-                                  // uppercase, tracking-[0.2em], off-white/40
-                                  Text(
-                                    'SYNCING LIBRARY',
-                                    style: GoogleFonts.manrope(
-                                      color: _colorOffWhite40,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      // tracking-[0.2em] → 12 × 0.2 = 2.4
-                                      letterSpacing: 2.4,
-                                    ),
+                                  // Label row: "SYNCING LIBRARY" + live percentage
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.end,
+                                    children: [
+                                      // Progress label: text-xs(12px), font-medium(500),
+                                      // uppercase, tracking-[0.2em], off-white/40
+                                      Text(
+                                        'SYNCING LIBRARY',
+                                        style: GoogleFonts.manrope(
+                                          color: _colorOffWhite40,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          // tracking-[0.2em] → 12 × 0.2 = 2.4
+                                          letterSpacing: 2.4,
+                                        ),
+                                      ),
+
+                                      // Percentage: text-xs(12px), font-medium(500),
+                                      // off-white/40 — reflects animation progress
+                                      Text(
+                                        '$percent%',
+                                        style: GoogleFonts.manrope(
+                                          color: _colorOffWhite40,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
 
-                                  // Percentage: text-xs(12px), font-medium(500),
-                                  // off-white/40
-                                  Text(
-                                    '68%',
-                                    style: GoogleFonts.manrope(
-                                      color: _colorOffWhite40,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                  // gap-3 = 12px between label row and bar
+                                  const SizedBox(height: 12),
+
+                                  // Progress bar: h-[1px], track bg-white/5,
+                                  // fill bg-primary, rounded-full
+                                  LinearProgressIndicator(
+                                    value: _loadAnimation.value,
+                                    minHeight: 1.0,
+                                    backgroundColor: _colorWhite05,
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                            _colorPrimary),
+                                    borderRadius:
+                                        BorderRadius.circular(9999),
                                   ),
                                 ],
-                              ),
-
-                              // gap-3 = 12px between label row and bar
-                              const SizedBox(height: 12),
-
-                              // Progress bar: h-[1px], track bg-white/5,
-                              // fill bg-primary, rounded-full, value 68%
-                              LinearProgressIndicator(
-                                value: 0.68,
-                                minHeight: 1.0,
-                                backgroundColor: _colorWhite05,
-                                valueColor: const AlwaysStoppedAnimation<Color>(
-                                    _colorPrimary),
-                                borderRadius:
-                                    BorderRadius.circular(9999),
-                              ),
-                            ],
+                              );
+                            },
                           ),
                         ),
                       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   // ── Backgrounds ──────────────────────────────
@@ -30,83 +31,72 @@ class AppColors {
 }
 
 class AppTypography {
-  static const String fontFamily = 'Outfit';
+  static String get fontFamily => GoogleFonts.outfit().fontFamily!;
 
-  static const TextStyle displayLarge = TextStyle(
-    fontFamily: fontFamily,
+  static TextStyle get displayLarge => GoogleFonts.outfit(
     fontSize: 32,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
     letterSpacing: -0.5,
   );
 
-  static const TextStyle displayMedium = TextStyle(
-    fontFamily: fontFamily,
+  static TextStyle get displayMedium => GoogleFonts.outfit(
     fontSize: 26,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
     letterSpacing: -0.3,
   );
 
-  static const TextStyle headlineLarge = TextStyle(
-    fontFamily: fontFamily,
+  static TextStyle get headlineLarge => GoogleFonts.outfit(
     fontSize: 22,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
 
-  static const TextStyle headlineMedium = TextStyle(
-    fontFamily: fontFamily,
+  static TextStyle get headlineMedium => GoogleFonts.outfit(
     fontSize: 18,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
 
-  static const TextStyle titleLarge = TextStyle(
-    fontFamily: fontFamily,
+  static TextStyle get titleLarge => GoogleFonts.outfit(
     fontSize: 16,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
 
-  static const TextStyle titleMedium = TextStyle(
-    fontFamily: fontFamily,
+  static TextStyle get titleMedium => GoogleFonts.outfit(
     fontSize: 14,
     fontWeight: FontWeight.w500,
     color: AppColors.textPrimary,
   );
 
-  static const TextStyle bodyLarge = TextStyle(
-    fontFamily: fontFamily,
+  static TextStyle get bodyLarge => GoogleFonts.outfit(
     fontSize: 16,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
   );
 
-  static const TextStyle bodyMedium = TextStyle(
-    fontFamily: fontFamily,
+  static TextStyle get bodyMedium => GoogleFonts.outfit(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
   );
 
-  static const TextStyle bodySmall = TextStyle(
-    fontFamily: fontFamily,
+  static TextStyle get bodySmall => GoogleFonts.outfit(
     fontSize: 12,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
   );
 
-  static const TextStyle labelLarge = TextStyle(
-    fontFamily: fontFamily,
+  static TextStyle get labelLarge => GoogleFonts.outfit(
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
     letterSpacing: 0.5,
   );
 
-  static const TextStyle labelSmall = TextStyle(
-    fontFamily: fontFamily,
+  static TextStyle get labelSmall => GoogleFonts.outfit(
     fontSize: 11,
     fontWeight: FontWeight.w500,
     color: AppColors.textSecondary,
@@ -138,7 +128,7 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.background,
 
       // ── AppBar ─────────────────────────────────
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor:        AppColors.background,
         elevation:              0,
         scrolledUnderElevation: 0,
@@ -148,7 +138,7 @@ class AppTheme {
       ),
 
       // ── Bottom Navigation Bar ──────────────────
-      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor:      AppColors.navBackground,
         selectedItemColor:    AppColors.navSelected,
         unselectedItemColor:  AppColors.navUnselected,
@@ -287,7 +277,7 @@ class AppTheme {
       ),
 
       // ── Text Theme ─────────────────────────────
-      textTheme: const TextTheme(
+      textTheme: TextTheme(
         displayLarge:   AppTypography.displayLarge,
         displayMedium:  AppTypography.displayMedium,
         headlineLarge:  AppTypography.headlineLarge,
