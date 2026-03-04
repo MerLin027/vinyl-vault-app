@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#5BAD8F",
+                        "background-light": "#f6f7f7",
+                        "background-dark": "#111211",
+                        "vinyl-dark": "#111211",
+                        "off-white": "#F5F0E8",
+                        "surface": "#1A1C19",
+                        "input-bg": "#222420"
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }</script>
+<style>
+        .vinyl-grooves {
+            background: repeating-radial-gradient(
+                circle at center,
+                #111211 0,
+                #111211 2px,
+                #1A1C19 3px,
+                #111211 4px
+            );
+        }
+        .vinyl-sheen {
+            background: conic-gradient(
+                from 0deg,
+                transparent 0deg,
+                rgba(245, 240, 232, 0.05) 45deg,
+                transparent 90deg,
+                rgba(245, 240, 232, 0.05) 180deg,
+                transparent 225deg,
+                rgba(245, 240, 232, 0.05) 270deg,
+                transparent 360deg
+            );
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="font-display text-off-white overflow-hidden bg-[#111211]">
+<div class="relative flex h-screen w-full flex-col items-center justify-center bg-[#111211]">
+<!-- Vinyl Record Illustration -->
+<div class="relative flex items-center justify-center mb-12">
+<!-- Main Record Body -->
+<div class="relative w-64 h-64 md:w-80 md:h-80 rounded-full vinyl-grooves flex items-center justify-center border border-white/5">
+<!-- Sheen overlay -->
+<div class="absolute inset-0 rounded-full vinyl-sheen opacity-40"></div>
+<!-- Record Label -->
+<div class="w-24 h-24 md:w-32 md:h-32 rounded-full bg-primary flex items-center justify-center relative z-10">
+<div class="w-4 h-4 rounded-full bg-[#111211]"></div>
+</div>
+</div>
+<!-- Stylus Arm (Decorative) -->
+</div>
+<!-- Wordmark and Tagline -->
+<div class="text-center px-6">
+<h1 class="text-off-white tracking-[0.1em] text-4xl md:text-5xl font-extrabold leading-tight mb-2 uppercase">
+                VinylVault
+            </h1>
+<p class="text-off-white/70 text-lg md:text-xl font-light tracking-wide italic">
+                Your curated record collection
+            </p>
+</div>
+<!-- Progress Bar Area -->
+<div class="absolute bottom-16 w-full max-w-xs px-4">
+<div class="flex flex-col gap-3">
+<div class="flex justify-between items-end">
+<p class="text-off-white/40 text-xs font-medium uppercase tracking-[0.2em]">Syncing Library</p>
+<p class="text-off-white/40 text-xs font-medium">68%</p>
+</div>
+<div class="h-[1px] w-full bg-white/5 rounded-full overflow-hidden"><div class="h-full bg-primary" style="width: 68%;"></div></div>
+</div>
+</div>
+<!-- Subtle Ambient Background -->
+<div class="absolute inset-0 pointer-events-none">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-radial-gradient from-primary/5 to-transparent"></div>
+</div>
+</div>
+</body></html>
