@@ -4,30 +4,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../config/theme.dart';
+import '../../widgets/vinyl_logo.dart';
+
 // ─── Colors extracted directly from HTML/CSS ──────────────────────────────────
 // vault-dark / background-dark: #111211
-const Color _colorBackground = Color(0xFF111211);
+const Color _colorBackground = AppColors.background;
 // primary: #5BAD8F
-const Color _colorPrimary = Color(0xFF5BAD8F);
+const Color _colorPrimary = AppColors.accent;
 // vault-dark (icon/button text foreground on primary bg): #111211
-const Color _colorVaultDark = Color(0xFF111211);
+const Color _colorVaultDark = AppColors.background;
 // vault-input: #222420
-const Color _colorVaultInput = Color(0xFF222420);
+const Color _colorVaultInput = AppColors.surfaceVariant;
 // vault-text: #F5F0E8
-const Color _colorVaultText = Color(0xFFF5F0E8);
-// vault-text/80 → rgba(245,240,232,0.80) → 0xCC
+const Color _colorVaultText = AppColors.textPrimary;
+// vault-text/80 → rgba(245,240,232,0.80) → 0xCCF5F0E8 // no theme equivalent
 const Color _colorVaultText80 = Color(0xCCF5F0E8);
-// vault-text/60 → rgba(245,240,232,0.60) → 0x99
+// vault-text/60 → rgba(245,240,232,0.60) → 0x99F5F0E8 // no theme equivalent
 const Color _colorVaultText60 = Color(0x99F5F0E8);
-// vault-text/40 → rgba(245,240,232,0.40) → 0x66
+// vault-text/40 → rgba(245,240,232,0.40) → 0x66F5F0E8 // no theme equivalent
 const Color _colorVaultText40 = Color(0x66F5F0E8);
-// vault-text/10 → rgba(245,240,232,0.10) → 0x1A
+// vault-text/10 → rgba(245,240,232,0.10) → 0x1AF5F0E8 // no theme equivalent
 const Color _colorVaultText10 = Color(0x1AF5F0E8);
-// primary/5 → rgba(91,173,143,0.05) → 0x0D (decorative ambient circles)
+
+// primary/5 → rgba(91,173,143,0.05) → 0x0D5BAD8F // no theme equivalent
 const Color _colorPrimary05 = Color(0x0D5BAD8F);
-// primary/20 → rgba(91,173,143,0.20) → 0x33 (logo circle shadow)
-const Color _colorPrimary20 = Color(0x335BAD8F);
-// primary/10 → rgba(91,173,143,0.10) → 0x1A (button shadow)
+// primary/10 → rgba(91,173,143,0.10) → 0x1A5BAD8F // no theme equivalent
 const Color _colorPrimary10 = Color(0x1A5BAD8F);
 
 // ─── Google G logo SVG (fill hardcoded to #5BAD8F = text-primary) ─────────────
@@ -55,404 +57,294 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _colorBackground,
-      // Stack allows fixed-position decorative ambient circles behind the scroll view
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // ── Decorative ambient circle — bottom-left ──────────────────────────
-          // fixed -bottom-24 -left-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10
-          Positioned(
-            bottom: -96, // -bottom-24 = -6rem = -96px
-            left: -96,   // -left-24  = -6rem = -96px
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(
-                sigmaX: 32,
-                sigmaY: 32,
-                tileMode: TileMode.decal,
-              ),
-              child: Container(
-                width: 256,  // w-64 = 16rem = 256px
-                height: 256,
-                decoration: const BoxDecoration(
-                  color: _colorPrimary05,
-                  shape: BoxShape.circle,
-                ),
-              ),
+          // ── Background fill with decorative blobs ────────────────────────────
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              color: AppColors.background,
             ),
-          ),
-
-          // ── Decorative ambient circle — top-right ────────────────────────────
-          // fixed -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-10
-          Positioned(
-            top: -96,   // -top-24  = -96px
-            right: -96, // -right-24 = -96px
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(
-                sigmaX: 32,
-                sigmaY: 32,
-                tileMode: TileMode.decal,
-              ),
-              child: Container(
-                width: 256,
-                height: 256,
-                decoration: const BoxDecoration(
-                  color: _colorPrimary05,
-                  shape: BoxShape.circle,
+            child: Stack(
+              children: [
+                // ── Blob — top-right ───────────────────────────────────────────
+                Positioned(
+                  top: -60,
+                  right: -60,
+                  child: Container(
+                    width: 260,
+                    height: 260,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1A2E1A).withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(200),
+                    ),
+                  ),
                 ),
-              ),
+                // ── Blob — bottom-left ─────────────────────────────────────────
+                Positioned(
+                  bottom: -60,
+                  left: -60,
+                  child: Container(
+                    width: 260,
+                    height: 260,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1A2E1A).withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(200),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
           // ── Main scrollable content ──────────────────────────────────────────
           SafeArea(
             child: SingleChildScrollView(
-              // p-4 = 16px padding around all content
-              padding: const EdgeInsets.all(16.0),
-              child: Center(
-                child: ConstrainedBox(
-                  // max-w-md = 28rem = 448px
-                  constraints: const BoxConstraints(maxWidth: 448),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // ── Logo and wordmark section ────────────────────────────
-                      // flex flex-col items-center mb-8
-                      Column(
-                        children: [
-                          // Logo circle: w-16 h-16 bg-primary rounded-full
-                          // shadow-lg shadow-primary/20, mb-2 below
-                          Container(
-                            width: 64,  // w-16 = 64px
-                            height: 64, // h-16 = 64px
-                            decoration: const BoxDecoration(
-                              color: _colorPrimary,
-                              shape: BoxShape.circle,
-                              // shadow-lg shadow-primary/20
-                              boxShadow: [
-                                BoxShadow(
-                                  color: _colorPrimary20,
-                                  blurRadius: 15,
-                                  offset: Offset(0, 10),
-                                  spreadRadius: -3,
-                                ),
-                                BoxShadow(
-                                  color: _colorPrimary20,
-                                  blurRadius: 6,
-                                  offset: Offset(0, 4),
-                                  spreadRadius: -4,
-                                ),
-                              ],
-                            ),
-                            // Album icon: text-vault-dark text-4xl (36px)
-                            child: const Icon(
-                              Icons.album,
-                              color: _colorVaultDark,
-                              size: 36, // text-4xl ≈ 36px
-                            ),
-                          ),
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Top spacing ──────────────────────────────────────────────
+                  const SizedBox(height: 72),
 
-                          // mb-2 = 8px gap
-                          const SizedBox(height: 8),
-
-                          // App name: text-2xl(24px), font-extrabold(800),
-                          // tracking-tight(-0.025em), text-vault-text
-                          Text(
-                            'VinylVault',
-                            style: GoogleFonts.manrope(
-                              color: _colorVaultText,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w800,
-                              // tracking-tight = -0.025em → 24 × -0.025 = -0.6
-                              letterSpacing: -0.6,
-                            ),
+                  // ── Logo and wordmark — centered ─────────────────────────────
+                  Center(
+                    child: Column(
+                      children: [
+                        const VinylLogo(size: 72),
+                        const SizedBox(height: 10),
+                        Text(
+                          'VinylVault',
+                          style: GoogleFonts.tenorSans(
+                            color: _colorVaultText,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: 2.0,
                           ),
-                        ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // ── Email label + field ──────────────────────────────────────
+                  _buildInputSection(
+                    label: 'Email',
+                    hintText: 'Enter your email',
+                    keyboardType: TextInputType.emailAddress,
+                    obscureText: false,
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // ── Password label ───────────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4.0),
+                    child: Text(
+                      'Password',
+                      style: AppTypography.titleMedium.copyWith(
+                        color: _colorVaultText80,
                       ),
+                    ),
+                  ),
 
-                      // mb-8 = 32px gap after logo section
-                      const SizedBox(height: 32),
+                  const SizedBox(height: 8),
 
-                      // ── Form card section (space-y-6 = 24px between children) ─
-                      // "Welcome Back" heading: text-3xl(30px), font-bold(700),
-                      // text-center, mb-8 = 32px below
-                      Text(
-                        'Welcome Back',
-                        style: GoogleFonts.manrope(
-                          color: _colorVaultText,
-                          fontSize: 30, // text-3xl = 1.875rem = 30px
+                  // ── Password field ───────────────────────────────────────────
+                  TextField(
+                    obscureText: _obscurePassword,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: _colorVaultInput,
+                      hintText: 'Enter your password',
+                      hintStyle: AppTypography.bodyMedium.copyWith(
+                        color: _colorVaultText40,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 18.0,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: _colorPrimary,
+                          width: 2,
+                        ),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: _colorVaultText40,
+                          size: 22,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // ── Forgot Password — right-aligned ──────────────────────────
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      'Forgot Password?',
+                      style: AppTypography.titleMedium.copyWith(
+                        color: AppColors.accent,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ── Log In button ────────────────────────────────────────────
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _colorPrimary,
+                        foregroundColor: _colorVaultDark,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        shadowColor: _colorPrimary10,
+                        elevation: 8,
+                      ),
+                      onPressed: () {},
+                      child: Text(
+                        'Log In',
+                        style: GoogleFonts.jost(
+                          color: _colorVaultDark,
+                          fontSize: 16,
                           fontWeight: FontWeight.w700,
                         ),
-                        textAlign: TextAlign.center,
                       ),
+                    ),
+                  ),
 
-                      // mb-8(32px) on h1 + space-y-6(24px) on next sibling = 56px total
-                      const SizedBox(height: 56),
+                  const SizedBox(height: 24),
 
-                      // ── Email input field section ────────────────────────────
-                      _buildInputSection(
-                        label: 'Email',
-                        hintText: 'Enter your email',
-                        keyboardType: TextInputType.emailAddress,
-                        obscureText: false,
-                      ),
-
-                      // space-y-6 = 24px between form sections
-                      const SizedBox(height: 24),
-
-                      // ── Password input field section ─────────────────────────
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Label: text-sm(14px), font-medium(500), vault-text/80, ml-1
-                          Padding(
-                            padding: const EdgeInsets.only(left: 4.0), // ml-1
-                            child: Text(
-                              'Password',
-                              style: GoogleFonts.manrope(
-                                color: _colorVaultText80,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-
-                          // gap-2 = 8px between label and input
-                          const SizedBox(height: 8),
-
-                          // Password TextField with show/hide toggle
-                          // h-14(56px), px-4(16px), pr-12(48px), rounded-xl(12px),
-                          // bg-vault-input(#222420)
-                          TextField(
-                            obscureText: _obscurePassword,
-                            style: GoogleFonts.manrope(
-                              color: _colorVaultText,
-                              fontSize: 14,
-                            ),
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: _colorVaultInput,
-                              hintText: 'Enter your password',
-                              hintStyle: GoogleFonts.manrope(
-                                color: _colorVaultText40,
-                                fontSize: 14,
-                              ),
-                              // px-4 = 16px horizontal, vertical gives ~56px total
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16.0,
-                                vertical: 18.0,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                // rounded-xl = 0.75rem = 12px (per login tailwind config)
-                                borderSide: BorderSide.none,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              // focus:ring-2 focus:ring-primary
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: _colorPrimary,
-                                  width: 2,
-                                ),
-                              ),
-                              // Password show/hide toggle icon
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility_off_outlined
-                                      : Icons.visibility_outlined,
-                                  // text-vault-text/40 default color
-                                  color: _colorVaultText40,
-                                  size: 22,
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _obscurePassword = !_obscurePassword;
-                                  });
-                                },
-                              ),
-                            ),
-                          ),
-
-                          // mt-1 = 4px gap above forgot password link
-                          const SizedBox(height: 4),
-
-                          // Forgot Password link: text-sm, text-primary, right-aligned
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Text(
-                              'Forgot Password?',
-                              style: GoogleFonts.manrope(
-                                color: _colorPrimary,
-                                fontSize: 14, // text-sm
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      // space-y-6 = 24px
-                      const SizedBox(height: 24),
-
-                      // ── Log In button ────────────────────────────────────────
-                      // w-full h-14(56px) bg-primary text-vault-dark font-bold rounded-xl(12px)
-                      // shadow-lg shadow-primary/10
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56, // h-14
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _colorPrimary,
-                            foregroundColor: _colorVaultDark,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            // shadow-lg shadow-primary/10
-                            shadowColor: _colorPrimary10,
-                            elevation: 8,
-                          ),
-                          onPressed: () {},
-                          child: Text(
-                            'Log In',
-                            style: GoogleFonts.manrope(
-                              color: _colorVaultDark,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700, // font-bold
-                            ),
-                          ),
+                  // ── OR divider ───────────────────────────────────────────────
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Divider(
+                          color: _colorVaultText10,
+                          thickness: 1,
+                          height: 1,
                         ),
                       ),
-
-                      // space-y-6 = 24px (top gap of divider section)
-                      const SizedBox(height: 24),
-
-                      // ── "or" divider ─────────────────────────────────────────
-                      // relative flex items-center py-4
-                      // border-t border-vault-text/10 on both sides
                       Padding(
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 16.0), // py-4
-                        child: Row(
-                          children: [
-                            // Left rule
-                            const Expanded(
-                              child: Divider(
-                                color: _colorVaultText10,
-                                thickness: 1,
-                                height: 1,
-                              ),
-                            ),
-                            // "or" label: mx-4(16px), text-vault-text/40,
-                            // text-sm(14px), uppercase, tracking-widest, font-semibold(600)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0), // mx-4
-                              child: Text(
-                                'OR',
-                                style: GoogleFonts.manrope(
-                                  color: _colorVaultText40,
-                                  fontSize: 14, // text-sm
-                                  fontWeight: FontWeight.w600, // font-semibold
-                                  // tracking-widest = 0.1em → 14 × 0.1 = 1.4
-                                  letterSpacing: 1.4,
-                                ),
-                              ),
-                            ),
-                            // Right rule
-                            const Expanded(
-                              child: Divider(
-                                color: _colorVaultText10,
-                                thickness: 1,
-                                height: 1,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // space-y-6 = 24px (bottom gap of divider section)
-                      const SizedBox(height: 24),
-
-                      // ── Sign in with Google button ───────────────────────────
-                      // w-full h-14(56px) border-2 border-primary bg-transparent
-                      // text-primary font-semibold rounded-xl(12px) gap-3(12px icon gap)
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56, // h-14
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(
-                              color: _colorPrimary,
-                              width: 2, // border-2
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            backgroundColor: Colors.transparent,
-                            foregroundColor: _colorPrimary,
-                          ),
-                          onPressed: () {},
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // Google G logo SVG — w-5 = 20px
-                              SvgPicture.string(
-                                _googleLogoSvg,
-                                width: 20,
-                                height: 20,
-                              ),
-                              // gap-3 = 12px between icon and label
-                              const SizedBox(width: 12),
-                              Text(
-                                'Sign in with Google',
-                                style: GoogleFonts.manrope(
-                                  color: _colorPrimary,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600, // font-semibold
-                                ),
-                              ),
-                            ],
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Text(
+                          'OR',
+                          style: AppTypography.labelLarge.copyWith(
+                            color: _colorVaultText40,
+                            letterSpacing: 1.4,
                           ),
                         ),
                       ),
-
-                      // ── Bottom sign-up link ──────────────────────────────────
-                      // mt-10 = 40px, text-vault-text/60, text-center
-                      Padding(
-                        padding: const EdgeInsets.only(top: 40.0), // mt-10
-                        child: RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: "Don't have an account?",
-                                style: GoogleFonts.manrope(
-                                  color: _colorVaultText60,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              // ml-1 = 4px left margin on Sign Up link
-                              const WidgetSpan(child: SizedBox(width: 4)),
-                              TextSpan(
-                                text: 'Sign Up',
-                                style: GoogleFonts.manrope(
-                                  color: _colorPrimary,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700, // font-bold
-                                ),
-                              ),
-                            ],
-                          ),
+                      const Expanded(
+                        child: Divider(
+                          color: _colorVaultText10,
+                          thickness: 1,
+                          height: 1,
                         ),
                       ),
                     ],
                   ),
-                ),
+
+                  const SizedBox(height: 24),
+
+                  // ── Sign in with Google button ───────────────────────────────
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(
+                          color: _colorPrimary,
+                          width: 2,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: _colorPrimary,
+                      ),
+                      onPressed: () {},
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SvgPicture.string(
+                            _googleLogoSvg,
+                            width: 20,
+                            height: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Sign in with Google',
+                            style: AppTypography.titleLarge.copyWith(
+                              color: AppColors.accent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // ── Don't have an account row — centered ─────────────────────
+                  Center(
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: "Don't have an account?",
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: _colorVaultText60,
+                            ),
+                          ),
+                          const WidgetSpan(child: SizedBox(width: 4)),
+                          TextSpan(
+                            text: 'Sign Up',
+                            style: GoogleFonts.jost(
+                              color: _colorPrimary,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+                ],
               ),
             ),
           ),
@@ -477,10 +369,8 @@ class _LoginScreenState extends State<LoginScreen> {
           padding: const EdgeInsets.only(left: 4.0), // ml-1
           child: Text(
             label,
-            style: GoogleFonts.manrope(
+            style: AppTypography.titleMedium.copyWith(
               color: _colorVaultText80,
-              fontSize: 14, // text-sm
-              fontWeight: FontWeight.w500,
             ),
           ),
         ),
@@ -493,17 +383,15 @@ class _LoginScreenState extends State<LoginScreen> {
         TextField(
           obscureText: obscureText,
           keyboardType: keyboardType,
-          style: GoogleFonts.manrope(
-            color: _colorVaultText,
-            fontSize: 14,
+          style: AppTypography.bodyMedium.copyWith(
+            color: AppColors.textPrimary,
           ),
           decoration: InputDecoration(
             filled: true,
             fillColor: _colorVaultInput,
             hintText: hintText,
-            hintStyle: GoogleFonts.manrope(
+            hintStyle: AppTypography.bodyMedium.copyWith(
               color: _colorVaultText40,
-              fontSize: 14,
             ),
             // px-4 = 16px horizontal, vertical padding gives ~56px total height
             contentPadding: const EdgeInsets.symmetric(
@@ -516,7 +404,10 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderSide: const BorderSide(
+                color: AppColors.border,
+                width: 1.0,
+              ),
             ),
             // focus:ring-2 focus:ring-primary
             focusedBorder: OutlineInputBorder(

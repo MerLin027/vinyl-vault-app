@@ -31,72 +31,72 @@ class AppColors {
 }
 
 class AppTypography {
-  static String get fontFamily => GoogleFonts.outfit().fontFamily!;
+  static String get fontFamily => GoogleFonts.jost().fontFamily!;
 
-  static TextStyle get displayLarge => GoogleFonts.outfit(
+  static TextStyle get displayLarge => GoogleFonts.jost(
     fontSize: 32,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
     letterSpacing: -0.5,
   );
 
-  static TextStyle get displayMedium => GoogleFonts.outfit(
+  static TextStyle get displayMedium => GoogleFonts.jost(
     fontSize: 26,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
     letterSpacing: -0.3,
   );
 
-  static TextStyle get headlineLarge => GoogleFonts.outfit(
+  static TextStyle get headlineLarge => GoogleFonts.jost(
     fontSize: 22,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle get headlineMedium => GoogleFonts.outfit(
+  static TextStyle get headlineMedium => GoogleFonts.jost(
     fontSize: 18,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle get titleLarge => GoogleFonts.outfit(
+  static TextStyle get titleLarge => GoogleFonts.jost(
     fontSize: 16,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle get titleMedium => GoogleFonts.outfit(
+  static TextStyle get titleMedium => GoogleFonts.jost(
     fontSize: 14,
     fontWeight: FontWeight.w500,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle get bodyLarge => GoogleFonts.outfit(
+  static TextStyle get bodyLarge => GoogleFonts.jost(
     fontSize: 16,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle get bodyMedium => GoogleFonts.outfit(
+  static TextStyle get bodyMedium => GoogleFonts.jost(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
   );
 
-  static TextStyle get bodySmall => GoogleFonts.outfit(
+  static TextStyle get bodySmall => GoogleFonts.jost(
     fontSize: 12,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
   );
 
-  static TextStyle get labelLarge => GoogleFonts.outfit(
+  static TextStyle get labelLarge => GoogleFonts.jost(
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
     letterSpacing: 0.5,
   );
 
-  static TextStyle get labelSmall => GoogleFonts.outfit(
+  static TextStyle get labelSmall => GoogleFonts.jost(
     fontSize: 11,
     fontWeight: FontWeight.w500,
     color: AppColors.textSecondary,
@@ -277,7 +277,7 @@ class AppTheme {
       ),
 
       // ── Text Theme ─────────────────────────────
-      textTheme: TextTheme(
+      textTheme: GoogleFonts.jostTextTheme(TextTheme(
         displayLarge:   AppTypography.displayLarge,
         displayMedium:  AppTypography.displayMedium,
         headlineLarge:  AppTypography.headlineLarge,
@@ -289,7 +289,7 @@ class AppTheme {
         bodySmall:      AppTypography.bodySmall,
         labelLarge:     AppTypography.labelLarge,
         labelSmall:     AppTypography.labelSmall,
-      ),
+      )),
 
       // ── Snack Bar ──────────────────────────────
       snackBarTheme: SnackBarThemeData(
