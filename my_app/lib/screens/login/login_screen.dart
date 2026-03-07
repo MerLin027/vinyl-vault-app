@@ -1,5 +1,3 @@
-import 'dart:ui' show ImageFilter;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,11 +6,9 @@ import '../../config/theme.dart';
 import '../../widgets/vinyl_logo.dart';
 
 // ─── Colors extracted directly from HTML/CSS ──────────────────────────────────
-// vault-dark / background-dark: #111211
-const Color _colorBackground = AppColors.background;
-// primary: #5BAD8F
+// primary: #4DB8B8
 const Color _colorPrimary = AppColors.accent;
-// vault-dark (icon/button text foreground on primary bg): #111211
+// vault-dark (icon/button text foreground on primary bg): #111111
 const Color _colorVaultDark = AppColors.background;
 // vault-input: #222420
 const Color _colorVaultInput = AppColors.surfaceVariant;
@@ -27,10 +23,8 @@ const Color _colorVaultText40 = Color(0x66F5F0E8);
 // vault-text/10 → rgba(245,240,232,0.10) → 0x1AF5F0E8 // no theme equivalent
 const Color _colorVaultText10 = Color(0x1AF5F0E8);
 
-// primary/5 → rgba(91,173,143,0.05) → 0x0D5BAD8F // no theme equivalent
-const Color _colorPrimary05 = Color(0x0D5BAD8F);
-// primary/10 → rgba(91,173,143,0.10) → 0x1A5BAD8F // no theme equivalent
-const Color _colorPrimary10 = Color(0x1A5BAD8F);
+// primary/10 → rgba(77,184,184,0.10) → 0x1A4DB8B8 // no theme equivalent
+const Color _colorPrimary10 = Color(0x1A4DB8B8);
 
 // ─── Google G logo SVG (fill hardcoded to #4DB8B8 = accent) ────────────────────
 // Original HTML uses fill="currentColor" where currentColor = text-primary
