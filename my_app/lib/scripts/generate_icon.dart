@@ -23,7 +23,7 @@ void main() {
     await _renderIcon(
       path: 'assets/images/app_icon.png',
       size: canvasSize,
-      background: const ui.Color(0xFF111211),
+      background: const ui.Color(0xFF111111),
       radiusFraction: 0.46, // record diameter ≈ 92 % of canvas
     );
 
@@ -71,7 +71,7 @@ Future<void> _renderIcon({
 ///
 /// Colours match the widget exactly:
 ///   record fill   #1A1C19   groove rings + border  #2A2D2A
-///   center label  #5BAD8F   spindle hole           #111211
+///   center label  #4DB8B8   spindle hole           #111111
 void _drawVinyl(
   ui.Canvas canvas,
   double size, {
@@ -134,7 +134,7 @@ void _drawVinyl(
   canvas.drawCircle(
     center,
     labelRadius,
-    ui.Paint()..color = const ui.Color(0xFF5BAD8F),
+    ui.Paint()..color = const ui.Color(0xFF4DB8B8),
   );
 
   // ── Spindle hole ─────────────────────────────────────────────────────────

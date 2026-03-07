@@ -3,14 +3,14 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
   // ── Backgrounds ──────────────────────────────
-  static const Color background     = Color(0xFF111211); // dark charcoal-black
-  static const Color surface        = Color(0xFF1A1C19); // card surface
-  static const Color surfaceVariant = Color(0xFF222420); // input fields, chips
+  static const Color background     = Color(0xFF111111); // dark charcoal-black
+  static const Color surface        = Color(0xFF1A1A1A); // card surface
+  static const Color surfaceVariant = Color(0xFF222222); // input fields, chips
 
   // ── Accent ───────────────────────────────────
-  static const Color accent         = Color(0xFF5BAD8F); // muted sage-teal
-  static const Color accentLight    = Color(0xFF7EC4A8); // hover / highlight state
-  static const Color accentDark     = Color(0xFF3D8A6E); // pressed state
+  static const Color accent         = Color(0xFF4DB8B8); // muted sage-teal
+  static const Color accentLight    = Color(0xFF7ECECE); // hover / highlight state
+  static const Color accentDark     = Color(0xFF2E9494); // pressed state
 
   // ── Text ─────────────────────────────────────
   static const Color textPrimary    = Color(0xFFF5F0E8); // warm off-white
@@ -18,15 +18,15 @@ class AppColors {
   static const Color textHint       = Color(0xFF7A6A5A); // placeholder text
 
   // ── UI Elements ──────────────────────────────
-  static const Color divider        = Color(0xFF222420);
-  static const Color border         = Color(0xFF2A2D2A);
+  static const Color divider        = Color(0xFF222222);
+  static const Color border         = Color(0xFF2A2A2A);
   static const Color error          = Color(0xFFCF6679);
-  static const Color success        = Color(0xFF5BAD8F);
+  static const Color success        = Color(0xFF4DB8B8);
   static const Color warning        = Color(0xFFD4A857);
 
   // ── Bottom Nav ───────────────────────────────
-  static const Color navBackground  = Color(0xFF0E100E);
-  static const Color navSelected    = Color(0xFF5BAD8F);
+  static const Color navBackground  = Color(0xFF0E0E0E);
+  static const Color navSelected    = Color(0xFF4DB8B8);
   static const Color navUnselected  = Color(0xFF7A6A5A);
 }
 
