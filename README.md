@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="my_app/assets/images/app_icon_foreground.png" width="160" alt="VinylVault Logo" />
+
 # 🪩 VinylVault
 
 *Your curated record collection*
