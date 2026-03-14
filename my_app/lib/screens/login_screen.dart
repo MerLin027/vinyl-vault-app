@@ -1,9 +1,12 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../config/theme.dart';
-import '../../widgets/vinyl_logo.dart';
+import '../config/theme.dart';
+import '../widgets/vinyl_logo.dart';
+import 'home_screen.dart';
+import 'signup_screen.dart';
 
 // ─── Colors extracted directly from HTML/CSS ──────────────────────────────────
 // primary: #4DB8B8
@@ -45,6 +48,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  bool _isNavigating = false;
   // Password visibility toggle state
   bool _obscurePassword = true;
 
@@ -226,7 +230,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         shadowColor: _colorPrimary10,
                         elevation: 8,
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        if (_isNavigating) return;
+                        _isNavigating = true;
+                        Future.delayed(const Duration(milliseconds: 300), () {
+                          if (mounted) setState(() => _isNavigating = false);
+                        });
+                        Navigator.pushReplacement(
+                          context,
+                          fadeSlideRoute(const HomeScreen()));
+                      },
                       child: Text(
                         'Log In',
                         style: GoogleFonts.jost(
@@ -331,6 +344,17 @@ class _LoginScreenState extends State<LoginScreen> {
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                             ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                if (_isNavigating) return;
+                                _isNavigating = true;
+                                Future.delayed(const Duration(milliseconds: 300), () {
+                                  if (mounted) setState(() => _isNavigating = false);
+                                });
+                                Navigator.push(
+                                  context,
+                                  fadeSlideRoute(const SignupScreen()));
+                              },
                           ),
                         ],
                       ),

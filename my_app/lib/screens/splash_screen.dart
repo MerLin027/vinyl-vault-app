@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../config/theme.dart';
-import '../login/login_screen.dart';
-import '../../widgets/vinyl_logo.dart';
+import '../config/theme.dart';
+import 'home_screen.dart';
+import '../widgets/vinyl_logo.dart';
 
 // ─── Colors extracted directly from HTML/CSS ──────────────────────────────────
 // background-dark / vinyl-dark: #111211
@@ -91,7 +91,7 @@ class _SplashScreenState extends State<SplashScreen>
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            fadeSlideRoute(const HomeScreen()),
           );
         }
       });

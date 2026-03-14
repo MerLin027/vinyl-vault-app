@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'config/theme.dart';
-import 'screens/splash/splash_screen.dart';
+import 'screens/splash_screen.dart';
 
 void main() {
   runApp(const VinylVaultApp());

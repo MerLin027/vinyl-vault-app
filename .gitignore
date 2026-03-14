@@ -1,0 +1,8 @@
+# Ignore Agent files
+.agent/
+replace_routes.dart
+my_app/replace_routes.dart
+my_app/.agent/
+
+# Ignore HTML screens
+/screens/
