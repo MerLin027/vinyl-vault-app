@@ -1,8 +1,12 @@
-<div align="center">
+<p align="center">
+  <img src="assets/images/vinyl_logo.png" width="100" height="100"/>
+</p>
 
-<img src="my_app/assets/images/splash_logo.png" width="400" alt="VinylVault Splash Logo" />
+<h1 align="center">
+  <span style="color:#4DB8B8">VinylVault</span>
+</h1>
 
-## *Your curated record collection*
+<p align="center"><em>Your curated record collection</em></p>
 
 <br />
 
