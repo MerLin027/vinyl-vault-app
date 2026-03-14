@@ -1,10 +1,8 @@
 <div align="center">
 
-<img src="my_app/assets/images/app_icon_foreground.png" width="160" alt="VinylVault Logo" />
+<img src="my_app/assets/images/splash_logo.png" width="400" alt="VinylVault Splash Logo" />
 
-# 🪩 VinylVault
-
-*Your curated record collection*
+## *Your curated record collection*
 
 <br />
 
