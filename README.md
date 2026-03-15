@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="my_app/assets/images/banner.png" alt="VinylVault" width="600"/>
+  <img src="assets/images/banner.png" alt="VinylVault" width="700"/>
 </p>
 
 [![Flutter Version](https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev/)
