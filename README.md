@@ -1,5 +1,19 @@
 <p align="center">
-  <img src="assets/images/vinyl_logo.png" width="100" height="100"/>
+  <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+    <!-- outer circle -->
+    <circle cx="50" cy="50" r="48" fill="#1A1A1A" stroke="#2A2A2A" stroke-width="1.5" />
+    <!-- groove rings -->
+    <circle cx="50" cy="50" r="28" fill="none" stroke="#2A2A2A" stroke-width="0.6" />
+    <circle cx="50" cy="50" r="31.2" fill="none" stroke="#2A2A2A" stroke-width="0.6" />
+    <circle cx="50" cy="50" r="34.4" fill="none" stroke="#2A2A2A" stroke-width="0.6" />
+    <circle cx="50" cy="50" r="37.6" fill="none" stroke="#2A2A2A" stroke-width="0.6" />
+    <circle cx="50" cy="50" r="40.8" fill="none" stroke="#2A2A2A" stroke-width="0.6" />
+    <circle cx="50" cy="50" r="44" fill="none" stroke="#2A2A2A" stroke-width="0.6" />
+    <!-- center label -->
+    <circle cx="50" cy="50" r="18" fill="#4DB8B8" />
+    <!-- spindle hole -->
+    <circle cx="50" cy="50" r="4" fill="#111111" />
+  </svg>
 </p>
 
 <h1 align="center">
