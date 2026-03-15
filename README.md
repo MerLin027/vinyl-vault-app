@@ -1,25 +1,5 @@
 <p align="center">
-  <table border="0" cellspacing="0" cellpadding="0" style="border:none">
-    <tr>
-      <td style="border:none; padding-right: 16px;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="48" fill="#1A1A1A" stroke="#2A2A2A" stroke-width="1.5"/>
-          <circle cx="50" cy="50" r="44" fill="none" stroke="#2A2A2A" stroke-width="0.6"/>
-          <circle cx="50" cy="50" r="40" fill="none" stroke="#2A2A2A" stroke-width="0.6"/>
-          <circle cx="50" cy="50" r="36" fill="none" stroke="#2A2A2A" stroke-width="0.6"/>
-          <circle cx="50" cy="50" r="32" fill="none" stroke="#2A2A2A" stroke-width="0.6"/>
-          <circle cx="50" cy="50" r="28" fill="none" stroke="#2A2A2A" stroke-width="0.6"/>
-          <circle cx="50" cy="50" r="24" fill="none" stroke="#2A2A2A" stroke-width="0.6"/>
-          <circle cx="50" cy="50" r="18" fill="#4DB8B8"/>
-          <circle cx="50" cy="50" r="4" fill="#111111"/>
-        </svg>
-      </td>
-      <td style="border:none; vertical-align: middle;">
-        <h1 style="color:#4DB8B8; font-size: 48px; margin: 0; letter-spacing: 4px;">VINYLVAULT</h1>
-        <p style="color:#B8A898; margin: 4px 0 0 0; font-style: italic;">Your curated record collection</p>
-      </td>
-    </tr>
-  </table>
+  <img src="my_app/assets/images/banner.png" alt="VinylVault" width="600"/>
 </p>
 
 [![Flutter Version](https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev/)
