@@ -1,28 +1,26 @@
 <p align="center">
-  <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
-    <!-- outer circle -->
-    <circle cx="50" cy="50" r="48" fill="#1A1A1A" stroke="#2A2A2A" stroke-width="1.5" />
-    <!-- groove rings -->
-    <circle cx="50" cy="50" r="28" fill="none" stroke="#2A2A2A" stroke-width="0.6" />
-    <circle cx="50" cy="50" r="31.2" fill="none" stroke="#2A2A2A" stroke-width="0.6" />
-    <circle cx="50" cy="50" r="34.4" fill="none" stroke="#2A2A2A" stroke-width="0.6" />
-    <circle cx="50" cy="50" r="37.6" fill="none" stroke="#2A2A2A" stroke-width="0.6" />
-    <circle cx="50" cy="50" r="40.8" fill="none" stroke="#2A2A2A" stroke-width="0.6" />
-    <circle cx="50" cy="50" r="44" fill="none" stroke="#2A2A2A" stroke-width="0.6" />
-    <!-- center label -->
-    <circle cx="50" cy="50" r="18" fill="#4DB8B8" />
-    <!-- spindle hole -->
-    <circle cx="50" cy="50" r="4" fill="#111111" />
-  </svg>
+  <table border="0" cellspacing="0" cellpadding="0" style="border:none">
+    <tr>
+      <td style="border:none; padding-right: 16px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="48" fill="#1A1A1A" stroke="#2A2A2A" stroke-width="1.5"/>
+          <circle cx="50" cy="50" r="44" fill="none" stroke="#2A2A2A" stroke-width="0.6"/>
+          <circle cx="50" cy="50" r="40" fill="none" stroke="#2A2A2A" stroke-width="0.6"/>
+          <circle cx="50" cy="50" r="36" fill="none" stroke="#2A2A2A" stroke-width="0.6"/>
+          <circle cx="50" cy="50" r="32" fill="none" stroke="#2A2A2A" stroke-width="0.6"/>
+          <circle cx="50" cy="50" r="28" fill="none" stroke="#2A2A2A" stroke-width="0.6"/>
+          <circle cx="50" cy="50" r="24" fill="none" stroke="#2A2A2A" stroke-width="0.6"/>
+          <circle cx="50" cy="50" r="18" fill="#4DB8B8"/>
+          <circle cx="50" cy="50" r="4" fill="#111111"/>
+        </svg>
+      </td>
+      <td style="border:none; vertical-align: middle;">
+        <h1 style="color:#4DB8B8; font-size: 48px; margin: 0; letter-spacing: 4px;">VINYLVAULT</h1>
+        <p style="color:#B8A898; margin: 4px 0 0 0; font-style: italic;">Your curated record collection</p>
+      </td>
+    </tr>
+  </table>
 </p>
-
-<h1 align="center">
-  <span style="color:#4DB8B8">VinylVault</span>
-</h1>
-
-<p align="center"><em>Your curated record collection</em></p>
-
-<br />
 
 [![Flutter Version](https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev/)
 [![Dart Version](https://img.shields.io/badge/Dart-3.x-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev/)
