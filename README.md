@@ -2,13 +2,13 @@
   <img src="my_app/assets/images/banner.png" alt="VinylVault" width="800"/>
 </p>
 
-[![Flutter Version](https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev/)
-[![Dart Version](https://img.shields.io/badge/Dart-3.x-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+<p align="center">
+  <a href="https://flutter.dev/"><img src="https://img.shields.io/badge/Flutter-3.x-02569B?style=flat-square&logo=flutter&logoColor=white" alt="Flutter Version" /></a>
+  <a href="https://dart.dev/"><img src="https://img.shields.io/badge/Dart-3.x-0175C2?style=flat-square&logo=dart&logoColor=white" alt="Dart Version" /></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" alt="License: MIT" /></a>
+</p>
 
 **VinylVault** is a beautiful, modern Flutter application for discovering, purchasing, and managing your curated vinyl record collection. With a sleek dark mode aesthetic, smooth navigation transitions, and a premium user experience, VinylVault caters to true audiophiles.
-
-</div>
 
 ---
 
