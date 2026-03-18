@@ -115,6 +115,7 @@ void main() {
     final file = File('assets/images/banner.png');
     file.parent.createSync(recursive: true);
     await file.writeAsBytes(byteData!.buffer.asUint8List());
+    // ignore: avoid_print
     print('Saved: assets/images/banner.png');
   });
 }

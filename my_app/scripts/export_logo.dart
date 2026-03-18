@@ -17,6 +17,7 @@ void main() {
     final file = File('assets/images/vinyl_logo.png');
     file.parent.createSync(recursive: true);
     await file.writeAsBytes(byteData!.buffer.asUint8List());
+    // ignore: avoid_print
     print('Saved: assets/images/vinyl_logo.png');
   });
 }

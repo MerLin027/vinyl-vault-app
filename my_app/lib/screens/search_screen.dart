@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../config/theme.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import './product_detail_screen.dart';
@@ -94,7 +95,15 @@ class _SearchScreenState extends State<SearchScreen> {
         backgroundColor: AppColors.background,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: Text('Search Vinyl', style: AppTypography.headlineMedium),
+        title: Text(
+          'Search VinylVault',
+          style: GoogleFonts.tenorSans(
+            fontSize: 22,
+            fontWeight: FontWeight.w400,
+            letterSpacing: 1.5,
+            color: AppColors.textPrimary,
+          ),
+        ),
         centerTitle: true,
       ),
       body: SafeArea(
