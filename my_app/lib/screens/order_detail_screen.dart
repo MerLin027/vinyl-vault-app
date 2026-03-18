@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../config/theme.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import './cart_screen.dart';
@@ -237,7 +236,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.1),
+              color: AppColors.accent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: AppColors.accent, size: 20),

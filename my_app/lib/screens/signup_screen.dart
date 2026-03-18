@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../config/theme.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
-import './home_screen.dart';
-import '../widgets/nav_transition.dart';
+import './main_screen.dart';
+import '../widgets/nav_transition.dart'; // ignore: unused_import
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -131,7 +131,23 @@ class _SignupScreenState extends State<SignupScreen> {
                   });
                   Navigator.pushReplacement(
                     context,
-                    fadeSlideRoute(const HomeScreen()));
+                    PageRouteBuilder(
+                      pageBuilder:
+                          (context, animation, secondaryAnimation) =>
+                              const MainScreen(),
+                      transitionsBuilder: (context, animation,
+                          secondaryAnimation, child) {
+                        return FadeTransition(
+                          opacity: animation.drive(
+                            Tween<double>(begin: 0.0, end: 1.0)
+                                .chain(CurveTween(curve: Curves.easeOut)),
+                          ),
+                          child: child,
+                        );
+                      },
+                      transitionDuration: const Duration(milliseconds: 300),
+                    ),
+                  );
                 },
                 child: const Text('Create Account'),
               ),

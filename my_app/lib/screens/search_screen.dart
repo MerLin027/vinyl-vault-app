@@ -1,11 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../config/theme.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
-import './home_screen.dart';
-import './cart_screen.dart';
-import './order_history_screen.dart';
-import './profile_screen.dart';
 import './product_detail_screen.dart';
 import '../widgets/nav_transition.dart';
 class _SearchResult {
@@ -31,8 +26,6 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  int _selectedNavIndex = 1;
-
   // Genre filter chips state
   final List<String> _genres = ['Jazz', 'Rock', 'Blues', 'Soul'];
   final Set<String> _activeGenres = {'Jazz'};
@@ -82,39 +75,6 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _showSnack(String msg) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-
-  void _onNavTap(int index) {
-    if (index == _selectedNavIndex) return;
-    if (_isNavigating) return;
-    _isNavigating = true;
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) setState(() => _isNavigating = false);
-    });
-    setState(() => _selectedNavIndex = index);
-    switch (index) {
-      case 0:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const HomeScreen()));
-        break;
-      case 1:
-        break;
-      case 2:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const CartScreen()));
-        break;
-      case 3:
-        Navigator.pushReplacement(
-            context,
-            fadeSlideRoute(const OrderHistoryScreen()));
-        break;
-      case 4:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const ProfileScreen()));
-        break;
-    }
-  }
-
-  // Toggle a chip selection in a set
   void _toggleChip(Set<String> set, String val) {
     setState(() {
       if (set.contains(val)) {
@@ -207,34 +167,6 @@ class _SearchScreenState extends State<SearchScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: AppColors.navBackground,
-        selectedItemColor: AppColors.navSelected,
-        unselectedItemColor: AppColors.navUnselected,
-        elevation: 0,
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedNavIndex,
-        onTap: _onNavTap,
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_cart_outlined),
-              activeIcon: Icon(Icons.shopping_cart),
-              label: 'Cart'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_outlined),
-              activeIcon: Icon(Icons.receipt_long),
-              label: 'Orders'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profile'),
-        ],
-      ),
     );
   }
 
@@ -268,11 +200,6 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget _buildSearchCard(_SearchResult r) {
     return GestureDetector(
       onTap: () {
-        if (_isNavigating) return;
-        _isNavigating = true;
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted) setState(() => _isNavigating = false);
-        });
         Navigator.push(
           context,
           fadeSlideRoute(const ProductDetailScreen()));

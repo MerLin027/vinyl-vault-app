@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:google_fonts/google_fonts.dart'; // used for VinylVault wordmark style
 import '../config/theme.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import './home_screen.dart';
@@ -83,7 +83,7 @@ class _InternetErrorScreenState extends State<InternetErrorScreen> {
                     width: 96,
                     height: 96,
                     decoration: BoxDecoration(
-                      color: AppColors.textSecondary.withOpacity(0.1),
+                      color: AppColors.textSecondary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(

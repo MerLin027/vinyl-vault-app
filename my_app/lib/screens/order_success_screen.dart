@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../config/theme.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import './home_screen.dart';
@@ -41,7 +40,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                 width: 96,
                 height: 96,
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.2),
+                  color: AppColors.accent.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: Center(

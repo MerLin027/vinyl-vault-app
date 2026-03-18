@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../config/theme.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
-import './home_screen.dart';
-import './search_screen.dart';
+import './home_screen.dart'; // ignore: unused_import
 import './checkout_screen.dart';
-import './order_history_screen.dart';
-import './profile_screen.dart';
 import '../widgets/nav_transition.dart';
 
 class _CartItem {
@@ -30,9 +26,6 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  int _selectedNavIndex = 2;
-  bool _isNavigating = false;
-
   final List<_CartItem> _items = const [
     _CartItem(
       imageUrl:
@@ -55,36 +48,6 @@ class _CartScreenState extends State<CartScreen> {
   void _showSnack(String msg) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(msg)));
-  }
-
-  void _onNavTap(int index) {
-    if (index == _selectedNavIndex) return;
-    if (_isNavigating) return;
-    _isNavigating = true;
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) setState(() => _isNavigating = false);
-    });
-    setState(() => _selectedNavIndex = index);
-    switch (index) {
-      case 0:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const HomeScreen()));
-        break;
-      case 1:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const SearchScreen()));
-        break;
-      case 2:
-        break;
-      case 3:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const OrderHistoryScreen()));
-        break;
-      case 4:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const ProfileScreen()));
-        break;
-    }
   }
 
   @override
@@ -122,7 +85,6 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -269,11 +231,6 @@ class _CartScreenState extends State<CartScreen> {
   Widget _buildCheckoutButton() {
     return ElevatedButton(
       onPressed: () {
-        if (_isNavigating) return;
-        _isNavigating = true;
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted) setState(() => _isNavigating = false);
-        });
         Navigator.push(
           context, fadeSlideRoute(const CheckoutScreen()));
       },
@@ -281,35 +238,4 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  // Standard bottom navigation bar
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      backgroundColor: AppColors.navBackground,
-      selectedItemColor: AppColors.navSelected,
-      unselectedItemColor: AppColors.navUnselected,
-      elevation: 0,
-      type: BottomNavigationBarType.fixed,
-      currentIndex: _selectedNavIndex,
-      onTap: _onNavTap,
-      items: const [
-        BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart_outlined),
-            activeIcon: Icon(Icons.shopping_cart),
-            label: 'Cart'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long_outlined),
-            activeIcon: Icon(Icons.receipt_long),
-            label: 'Orders'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile'),
-      ],
-    );
-  }
 }

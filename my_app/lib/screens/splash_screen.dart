@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../config/theme.dart';
-import 'home_screen.dart';
+import 'main_screen.dart';
 import '../widgets/vinyl_logo.dart';
+import '../widgets/nav_transition.dart'; // ignore: unused_import
 
 // ─── Colors extracted directly from HTML/CSS ──────────────────────────────────
 // background-dark / vinyl-dark: #111211
@@ -91,7 +92,21 @@ class _SplashScreenState extends State<SplashScreen>
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            fadeSlideRoute(const HomeScreen()),
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const MainScreen(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                return FadeTransition(
+                  opacity: animation.drive(
+                    Tween<double>(begin: 0.0, end: 1.0)
+                        .chain(CurveTween(curve: Curves.easeOut)),
+                  ),
+                  child: child,
+                );
+              },
+              transitionDuration: const Duration(milliseconds: 300),
+            ),
           );
         }
       });

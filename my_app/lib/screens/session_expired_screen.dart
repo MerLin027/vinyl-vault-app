@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../config/theme.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import './login_screen.dart';
@@ -72,7 +71,7 @@ class _SessionExpiredScreenState extends State<SessionExpiredScreen> {
           ),
           // Overlay tint
           Positioned.fill(
-            child: Container(color: Colors.black.withOpacity(0.8)),
+            child: Container(color: Colors.black.withValues(alpha: 0.8)),
           ),
           // Session expired modal
           Center(

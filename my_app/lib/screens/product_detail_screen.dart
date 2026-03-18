@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import '../config/theme.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import './cart_screen.dart';
@@ -50,11 +51,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               // Full-width square album art
               AspectRatio(
                 aspectRatio: 1,
-                child: Image.network(
-                  _imageUrl,
+                child: CachedNetworkImage(
+                  imageUrl: _imageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      Container(color: AppColors.surfaceVariant),
+                  placeholder: (context, url) => Shimmer.fromColors(
+                    baseColor: AppColors.surfaceVariant,
+                    highlightColor: AppColors.surface,
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      color: AppColors.surfaceVariant,
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: AppColors.surfaceVariant,
+                    child: Icon(Icons.album, color: AppColors.border, size: 40),
+                  ),
                 ),
               ),
               // Content section

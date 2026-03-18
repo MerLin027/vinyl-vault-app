@@ -5,7 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../config/theme.dart';
 import '../widgets/vinyl_logo.dart';
-import 'home_screen.dart';
+import '../widgets/nav_transition.dart'; // ignore: unused_import
+import 'main_screen.dart';
 import 'signup_screen.dart';
 
 // ─── Colors extracted directly from HTML/CSS ──────────────────────────────────
@@ -75,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: 260,
                     height: 260,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0D2A2A).withOpacity(0.6),
+                      color: const Color(0xFF0D2A2A).withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(200),
                     ),
                   ),
@@ -88,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: 260,
                     height: 260,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0D2A2A).withOpacity(0.6),
+                      color: const Color(0xFF0D2A2A).withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(200),
                     ),
                   ),
@@ -238,7 +239,24 @@ class _LoginScreenState extends State<LoginScreen> {
                         });
                         Navigator.pushReplacement(
                           context,
-                          fadeSlideRoute(const HomeScreen()));
+                          PageRouteBuilder(
+                            pageBuilder: (context, animation,
+                                    secondaryAnimation) =>
+                                const MainScreen(),
+                            transitionsBuilder: (context, animation,
+                                secondaryAnimation, child) {
+                              return FadeTransition(
+                                opacity: animation.drive(
+                                  Tween<double>(begin: 0.0, end: 1.0)
+                                      .chain(CurveTween(curve: Curves.easeOut)),
+                                ),
+                                child: child,
+                              );
+                            },
+                            transitionDuration:
+                                const Duration(milliseconds: 300),
+                          ),
+                        );
                       },
                       child: Text(
                         'Log In',

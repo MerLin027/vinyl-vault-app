@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../config/theme.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
-import 'search_screen.dart';
-import 'cart_screen.dart';
-import 'order_history_screen.dart';
-import 'profile_screen.dart';
 import 'product_detail_screen.dart';
+import '../widgets/nav_transition.dart';
 
 class _ProductData {
   const _ProductData({
@@ -37,39 +34,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedGenreIndex = 0;
-  int _selectedNavIndex = 0;
-  bool _isNavigating = false;
-
-  void _onNavTap(int index) {
-    if (index == _selectedNavIndex) return;
-    if (_isNavigating) return;
-    _isNavigating = true;
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) setState(() => _isNavigating = false);
-    });
-    setState(() => _selectedNavIndex = index);
-    switch (index) {
-      case 0:
-        break;
-      case 1:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const SearchScreen()));
-        break;
-      case 2:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const CartScreen()));
-        break;
-      case 3:
-        Navigator.pushReplacement(
-            context,
-            fadeSlideRoute(const OrderHistoryScreen()));
-        break;
-      case 4:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const ProfileScreen()));
-        break;
-    }
-  }
 
   static const _genres = [
     'All',
@@ -152,7 +116,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -190,11 +153,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ],
-        ),
-        IconButton(
-          icon: const Icon(Icons.shopping_cart_outlined),
-          color: AppColors.textSecondary,
-          onPressed: null,
         ),
         const SizedBox(width: 8),
       ],
@@ -283,11 +241,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildProductCard(_ProductData p) {
     return GestureDetector(
       onTap: () {
-        if (_isNavigating) return;
-        _isNavigating = true;
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted) setState(() => _isNavigating = false);
-        });
         Navigator.push(
             context,
             fadeSlideRoute(const ProductDetailScreen()));
@@ -321,7 +274,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.4),
+                      color: Colors.black.withValues(alpha: 0.4),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -386,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: primary
-            ? AppColors.accent.withOpacity(0.12)
+            ? AppColors.accent.withValues(alpha: 0.12)
             : AppColors.surfaceVariant,
         borderRadius: BorderRadius.circular(4),
       ),
@@ -420,41 +373,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      backgroundColor: AppColors.navBackground,
-      selectedItemColor: AppColors.navSelected,
-      unselectedItemColor: AppColors.navUnselected,
-      elevation: 0,
-      type: BottomNavigationBarType.fixed,
-      currentIndex: _selectedNavIndex,
-      onTap: _onNavTap,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.search),
-          label: 'Search',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.shopping_cart_outlined),
-          activeIcon: Icon(Icons.shopping_cart),
-          label: 'Cart',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.receipt_long_outlined),
-          activeIcon: Icon(Icons.receipt_long),
-          label: 'Orders',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          activeIcon: Icon(Icons.person),
-          label: 'Profile',
-        ),
-      ],
-    );
-  }
 }

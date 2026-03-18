@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../config/theme.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import './home_screen.dart';
@@ -82,10 +81,10 @@ class _OrderFailedScreenState extends State<OrderFailedScreen> {
                     width: 96,
                     height: 96,
                     decoration: BoxDecoration(
-                      color: AppColors.error.withOpacity(0.12),
+                      color: AppColors.error.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                       border: Border.all(
-                          color: AppColors.error.withOpacity(0.2), width: 2),
+                          color: AppColors.error.withValues(alpha: 0.2), width: 2),
                     ),
                     child: const Icon(
                       Icons.close,

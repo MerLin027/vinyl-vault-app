@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../config/theme.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
-import './home_screen.dart';
-import './search_screen.dart';
-import './cart_screen.dart';
 import './order_history_screen.dart';
 import './login_screen.dart';
 import '../widgets/nav_transition.dart';
@@ -16,42 +12,10 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  int _selectedNavIndex = 4;
   bool _isNavigating = false;
 
   void _showSnack(String msg) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-
-  void _onNavTap(int index) {
-    if (index == _selectedNavIndex) return;
-    if (_isNavigating) return;
-    _isNavigating = true;
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) setState(() => _isNavigating = false);
-    });
-    setState(() => _selectedNavIndex = index);
-    switch (index) {
-      case 0:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const HomeScreen()));
-        break;
-      case 1:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const SearchScreen()));
-        break;
-      case 2:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const CartScreen()));
-        break;
-      case 3:
-        Navigator.pushReplacement(
-            context,
-            fadeSlideRoute(const OrderHistoryScreen()));
-        break;
-      case 4:
-        break;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,103 +50,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   'ACCOUNT SETTINGS',
                   style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.accent.withOpacity(0.7),
+                    color: AppColors.accent.withValues(alpha: 0.7),
                     letterSpacing: 1.5,
                   ),
                 ),
                 const SizedBox(height: 12),
                 _buildMenuItem(
-                icon: Icons.person_outline,
-                label: 'Edit Profile',
-                onTap: () => _showSnack('Coming soon'),
-              ),
-              const SizedBox(height: 8),
-              _buildMenuItem(
-                icon: Icons.shopping_bag_outlined,
-                label: 'Order History',
-                badge: '12',
-                onTap: () {
-                  if (_isNavigating) return;
-                  _isNavigating = true;
-                  Future.delayed(const Duration(milliseconds: 300), () {
-                    if (mounted) setState(() => _isNavigating = false);
-                  });
-                  Navigator.push(
-                      context,
-                      fadeSlideRoute(const OrderHistoryScreen()));
-                },
-              ),
-              const SizedBox(height: 8),
-              _buildMenuItem(
-                icon: Icons.notifications_outlined,
-                label: 'Notifications',
-                onTap: () => _showSnack('Coming soon'),
-              ),
-              const SizedBox(height: 24),
-              // Support section
-              Text(
-                'SUPPORT',
-                style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.accent.withOpacity(0.7),
-                  letterSpacing: 1.5,
+                  icon: Icons.person_outline,
+                  label: 'Edit Profile',
+                  onTap: () => _showSnack('Coming soon'),
                 ),
-              ),
-              const SizedBox(height: 12),
-              _buildMenuItem(
-                icon: Icons.help_outline,
-                label: 'Help Center',
-                onTap: () => _showSnack('Coming soon'),
-              ),
-              const SizedBox(height: 8),
-              // Logout with accent color
-              _buildMenuItem(
-                icon: Icons.logout,
-                label: 'Log Out',
-                isAccent: true,
-                onTap: () {
-                  if (_isNavigating) return;
-                  _isNavigating = true;
-                  Future.delayed(const Duration(milliseconds: 300), () {
-                    if (mounted) setState(() => _isNavigating = false);
-                  });
-                  Navigator.pushAndRemoveUntil(
-                      context,
-                      fadeSlideRoute(const LoginScreen()),
-                      (route) => false);
-                },
-              ),
-            ],
+                const SizedBox(height: 8),
+                _buildMenuItem(
+                  icon: Icons.shopping_bag_outlined,
+                  label: 'Order History',
+                  badge: '12',
+                  onTap: () {
+                    if (_isNavigating) return;
+                    _isNavigating = true;
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      if (mounted) setState(() => _isNavigating = false);
+                    });
+                    Navigator.push(
+                        context,
+                        fadeSlideRoute(const OrderHistoryScreen()));
+                  },
+                ),
+                const SizedBox(height: 8),
+                _buildMenuItem(
+                  icon: Icons.notifications_outlined,
+                  label: 'Notifications',
+                  onTap: () => _showSnack('Coming soon'),
+                ),
+                const SizedBox(height: 24),
+                // Support section
+                Text(
+                  'SUPPORT',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.accent.withValues(alpha: 0.7),
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildMenuItem(
+                  icon: Icons.help_outline,
+                  label: 'Help Center',
+                  onTap: () => _showSnack('Coming soon'),
+                ),
+                const SizedBox(height: 8),
+                // Logout with accent color
+                _buildMenuItem(
+                  icon: Icons.logout,
+                  label: 'Log Out',
+                  isAccent: true,
+                  onTap: () {
+                    if (_isNavigating) return;
+                    _isNavigating = true;
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      if (mounted) setState(() => _isNavigating = false);
+                    });
+                    Navigator.pushAndRemoveUntil(
+                        context,
+                        fadeSlideRoute(const LoginScreen()),
+                        (route) => false);
+                  },
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: AppColors.navBackground,
-        selectedItemColor: AppColors.navSelected,
-        unselectedItemColor: AppColors.navUnselected,
-        elevation: 0,
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedNavIndex,
-        onTap: _onNavTap,
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_cart_outlined),
-              activeIcon: Icon(Icons.shopping_cart),
-              label: 'Cart'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_outlined),
-              activeIcon: Icon(Icons.receipt_long),
-              label: 'Orders'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profile'),
-        ],
-      ),
+      ), // Fixed: added missing ')' to close AnimatedSwitcher before Scaffold params
     );
   }
 
@@ -235,7 +172,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Text(
             'julian.vinyl@provider.com',
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.accent.withOpacity(0.8),
+              color: AppColors.accent.withValues(alpha: 0.8),
             ),
           ),
         ],
@@ -267,7 +204,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Text(
             label,
             style: AppTypography.labelSmall.copyWith(
-              color: AppColors.accent.withOpacity(0.7),
+              color: AppColors.accent.withValues(alpha: 0.7),
               letterSpacing: 1.5,
             ),
           ),
@@ -302,7 +239,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: color, size: 20),
@@ -332,7 +269,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(width: 8),
             ],
             Icon(Icons.chevron_right,
-                color: AppColors.accent.withOpacity(0.4), size: 20),
+                color: AppColors.accent.withValues(alpha: 0.4), size: 20),
           ],
         ),
       ),
