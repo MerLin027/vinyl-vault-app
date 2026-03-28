@@ -11,31 +11,29 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/widgets.dart';
 
-void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-  test('generate vinyl app icons', () async {
-    const int canvasSize = 1024;
+  const int canvasSize = 1024;
 
-    // Full icon: vinyl record on solid #111211 background.
-    await _renderIcon(
-      path: 'assets/images/app_icon.png',
-      size: canvasSize,
-      background: const ui.Color(0xFF111111),
-      radiusFraction: 0.46, // record diameter ≈ 92 % of canvas
-    );
+  // Full icon: vinyl record on solid #111211 background.
+  await _renderIcon(
+    path: 'assets/images/app_icon.png',
+    size: canvasSize,
+    background: const ui.Color(0xFF111111),
+    radiusFraction: 0.46, // record diameter ≈ 92 % of canvas
+  );
 
-    // Adaptive foreground: vinyl record on transparent background.
-    // Smaller radius leaves safe-zone padding for the adaptive-icon crop.
-    await _renderIcon(
-      path: 'assets/images/app_icon_foreground.png',
-      size: canvasSize,
-      background: null,
-      radiusFraction: 0.38, // record diameter ≈ 76 % of canvas
-    );
-  });
+  // Adaptive foreground: vinyl record on transparent background.
+  // Smaller radius leaves safe-zone padding for the adaptive-icon crop.
+  await _renderIcon(
+    path: 'assets/images/app_icon_foreground.png',
+    size: canvasSize,
+    background: null,
+    radiusFraction: 0.38, // record diameter ≈ 76 % of canvas
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -61,8 +59,7 @@ Future<void> _renderIcon({
   final file = File(path);
   file.parent.createSync(recursive: true);
   await file.writeAsBytes(byteData!.buffer.asUint8List());
-  // ignore: avoid_print
-  print('Saved: $path (${byteData.lengthInBytes} bytes)');
+  debugPrint('Saved: $path (${byteData.lengthInBytes} bytes)');
 }
 
 /// Replicates the _VinylLogoPainter design from lib/widgets/vinyl_logo.dart,

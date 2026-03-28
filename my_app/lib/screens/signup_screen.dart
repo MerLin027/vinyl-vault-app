@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
 import '../config/theme.dart';
+import '../providers/user_provider.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import './main_screen.dart';
 import '../widgets/nav_transition.dart'; // ignore: unused_import
@@ -33,6 +36,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<UserProvider>().isLoading;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -123,33 +128,88 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(height: 28),
               // Create Account button
               ElevatedButton(
-                onPressed: () {
-                  if (_isNavigating) return;
-                  _isNavigating = true;
-                  Future.delayed(const Duration(milliseconds: 300), () {
-                    if (mounted) setState(() => _isNavigating = false);
-                  });
-                  Navigator.pushReplacement(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder:
-                          (context, animation, secondaryAnimation) =>
-                              const MainScreen(),
-                      transitionsBuilder: (context, animation,
-                          secondaryAnimation, child) {
-                        return FadeTransition(
-                          opacity: animation.drive(
-                            Tween<double>(begin: 0.0, end: 1.0)
-                                .chain(CurveTween(curve: Curves.easeOut)),
-                          ),
-                          child: child,
+                onPressed: isLoading
+                    ? null
+                    : () async {
+                        final navigator = Navigator.of(context);
+                        final messenger = ScaffoldMessenger.of(context);
+
+                        final username = _usernameCtrl.text.trim();
+                        final email = _emailCtrl.text.trim();
+                        final password = _passwordCtrl.text;
+                        final confirmPassword = _confirmCtrl.text;
+
+                        if (username.isEmpty ||
+                            email.isEmpty ||
+                            password.isEmpty ||
+                            confirmPassword.isEmpty) {
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text('All fields are required'),
+                            ),
+                          );
+                          return;
+                        }
+
+                        if (password != confirmPassword) {
+                          messenger.showSnackBar(
+                            const SnackBar(
+                              content: Text('Passwords do not match'),
+                            ),
+                          );
+                          return;
+                        }
+
+                        final userProvider = context.read<UserProvider>();
+                        final success = await userProvider.signup(
+                          username,
+                          email,
+                          password,
                         );
+
+                        if (!mounted) return;
+
+                        if (success) {
+                          navigator.pushAndRemoveUntil(
+                            PageRouteBuilder(
+                              pageBuilder:
+                                  (context, animation, secondaryAnimation) =>
+                                      const MainScreen(),
+                              transitionsBuilder: (context, animation,
+                                  secondaryAnimation, child) {
+                                return FadeTransition(
+                                  opacity: animation.drive(
+                                    Tween<double>(begin: 0.0, end: 1.0)
+                                        .chain(CurveTween(curve: Curves.easeOut)),
+                                  ),
+                                  child: child,
+                                );
+                              },
+                              transitionDuration:
+                                  const Duration(milliseconds: 300),
+                            ),
+                            (route) => false,
+                          );
+                        } else {
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                userProvider.error ?? 'Signup failed',
+                              ),
+                            ),
+                          );
+                        }
                       },
-                      transitionDuration: const Duration(milliseconds: 300),
-                    ),
-                  );
-                },
-                child: const Text('Create Account'),
+                child: isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.background,
+                        ),
+                      )
+                    : const Text('Create Account'),
               ),
               const SizedBox(height: 24),
               // Divider

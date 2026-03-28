@@ -1,29 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
+
 import '../config/theme.dart';
+import '../models/product.dart';
+import '../providers/cart_provider.dart';
+import '../services/api_service.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import 'product_detail_screen.dart';
+import 'search_screen.dart';
 import '../widgets/nav_transition.dart';
-
-class _ProductData {
-  const _ProductData({
-    required this.imageUrl,
-    required this.genre,
-    required this.condition,
-    required this.title,
-    required this.artist,
-    required this.rating,
-    required this.price,
-  });
-
-  final String imageUrl;
-  final String genre;
-  final String condition;
-  final String title;
-  final String artist;
-  final String rating;
-  final String price;
-}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -34,6 +22,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedGenreIndex = 0;
+  final ApiService _apiService = ApiService();
+  List<Product> _products = <Product>[];
+  bool _isLoading = false;
+  String? _error;
 
   static const _genres = [
     'All',
@@ -45,48 +37,37 @@ class _HomeScreenState extends State<HomeScreen> {
     'Pop',
   ];
 
-  static const _products = [
-    _ProductData(
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuCiq8a1ybs2keZrGf1lEMMoASXjFmn_-9kCgjaNCi-t343hdkuHuQeY9n2fOYC4eqzfeugwr3YtbUsVBbpvDfE2Gjn4jyP1xQtA7DCVen6UBz0hiLbaamu9wNlKJuDKeSoLzLtP36zohnBCDlNyu0Y8KtNdIFveHboCkyIadq0FOVReBD0q9jIyOT32coapd1JYaVWVPmKQqaQp9byWQVF82Qh9v5dnkV6FfYj7c89ZEohHTkRHTKiXSHWy0Fi5-DJRxQNSEd56tzDA',
-      genre: 'Rock',
-      condition: 'Mint',
-      title: 'Midnight Waves',
-      artist: 'Echoes of Silence',
-      rating: '4.9',
-      price: r'$32.00',
-    ),
-    _ProductData(
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuCld71QrKhTE3NMOhrdiI-9cwOiZOoGYhF9-Xop1r9b4wELZDB9z05erss9rFH2kEv9JkF7ddHA1O0rZHfdEcm_78hjho7tslWuxLL-5OOfmhDtZCUrkMkbP4DHlqlj9bl6bh7e5i-w36CCHcLl2ZGk8AnViVKHXLqh8DLuBMCWrZtiwbux6BlYGu58N79Xm3AaB7lOQGxc_j5ka41SRfzp166vA1_dayzo2VVAaZMTT6VEXUmGvPRUpODJIYZIjFANtNwq7URuIbQB',
-      genre: 'Jazz',
-      condition: 'Near Mint',
-      title: 'Blue Notes',
-      artist: 'The Quintet',
-      rating: '4.7',
-      price: r'$45.50',
-    ),
-    _ProductData(
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuDOmw16o2tttovb3g04IP3EFm33empxWAF84iAdq8WMFijmZAvMo1hOJZu9dKD0dWUdRVCY53bJRfG75xGO-tqfqf_OeGc90YzG1BSISvyi_6lb9Um5SUtLBlzfhzunMcLC8eZGCJjf1I079Ce7Jn1aEjdjljSAc7-cqrOz1HiHVm7s60TbKH8Cm3mxrxScQk9rkFpE7NvnXTbLS0nFBktJds7S8vk9OCnqRBFdnlKrIrUxCobtbaLXf_sW64yT2qssFWJQgrfiwQg3',
-      genre: 'Electronic',
-      condition: 'Mint',
-      title: 'Neon Dreams',
-      artist: 'Synthwave Collective',
-      rating: '5.0',
-      price: r'$28.00',
-    ),
-    _ProductData(
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuBzd68p6GffyGp7c4TMqTh6vKTPoPrYxaBviomjDC2XaIeJQiBJvE_KFPbvglg8kJ5FVu5sAf-G9i7ehP7b0C3Cl5y8QIIYXfob0uL_qwncAY-tvEl1yLsXT9w925XkY6CSRv9R6AdNuYAMsCCL6vAS3hGFJuNA2DMTYaWxQ7REYvOJgkq7fKJwVxPg0SOH_vG9_V6HjYUveAMgJNHg-amKz5EG8NRb1xG_q3zPCLWOsD6EyKKaZfVbSmMMOfZ2ysvm-2wqLaE32oXk',
-      genre: 'Pop',
-      condition: 'VG+',
-      title: 'Summer Solstice',
-      artist: 'Aura May',
-      rating: '4.5',
-      price: r'$39.99',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts({String? genre}) async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final products = await _apiService.getProducts(genre: genre);
+      if (!mounted) return;
+      setState(() {
+        _products = products;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,9 +141,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSearchBar() {
-    return const TextField(
+    return TextField(
       readOnly: true,
-      decoration: InputDecoration(
+      onTap: () {
+        Navigator.push(context, fadeSlideRoute(const SearchScreen()));
+      },
+      decoration: const InputDecoration(
         hintText: 'Search for vinyl records, artists...',
         prefixIcon: Icon(Icons.search),
       ),
@@ -178,7 +162,10 @@ class _HomeScreenState extends State<HomeScreen> {
           return Padding(
             padding: EdgeInsets.only(right: i < _genres.length - 1 ? 8 : 0),
             child: GestureDetector(
-              onTap: () => setState(() => _selectedGenreIndex = i),
+              onTap: () {
+                setState(() => _selectedGenreIndex = i);
+                _loadProducts(genre: i == 0 ? null : _genres[i]);
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 decoration: BoxDecoration(
@@ -215,35 +202,67 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildProductGrid() {
-    return Column(
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: _buildProductCard(_products[0])),
-            const SizedBox(width: 12),
-            Expanded(child: _buildProductCard(_products[1])),
-          ],
+    if (_isLoading) {
+      return _buildShimmerGrid();
+    }
+
+    if (_error != null) {
+      return _buildInlineError();
+    }
+
+    if (_products.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 48),
+        child: Center(
+          child: Text('No records found', style: AppTypography.bodyMedium),
         ),
-        const SizedBox(height: 12),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: _buildProductCard(_products[2])),
-            const SizedBox(width: 12),
-            Expanded(child: _buildProductCard(_products[3])),
-          ],
-        ),
-      ],
+      );
+    }
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _products.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.63,
+      ),
+      itemBuilder: (context, index) {
+        return _buildProductCard(_products[index]);
+      },
     );
   }
 
-  Widget _buildProductCard(_ProductData p) {
+  Widget _buildProductCard(Product p) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
-            context,
-            fadeSlideRoute(const ProductDetailScreen()));
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                ProductDetailScreen(product: p),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              final tween =
+                  Tween(begin: const Offset(1.0, 0.0), end: Offset.zero).chain(
+                CurveTween(curve: Curves.easeOutCubic),
+              );
+              final fadeTween = Tween<double>(begin: 0.0, end: 1.0)
+                  .chain(CurveTween(curve: Curves.easeOut));
+
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: FadeTransition(
+                  opacity: animation.drive(fadeTween),
+                  child: child,
+                ),
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 280),
+            reverseTransitionDuration: const Duration(milliseconds: 220),
+          ),
+        );
       },
       child: Container(
       decoration: BoxDecoration(
@@ -261,12 +280,23 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.network(
-                  p.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      Container(color: AppColors.surfaceVariant),
-                ),
+                if (p.images.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(14),
+                      topRight: Radius.circular(14),
+                    ),
+                    child: CachedNetworkImage(
+                      imageUrl: p.images.first,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      errorWidget: (context, url, error) =>
+                          Container(color: AppColors.surfaceVariant),
+                    ),
+                  )
+                else
+                  Container(color: AppColors.surfaceVariant),
                 Positioned(
                   top: 8,
                   right: 8,
@@ -310,7 +340,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(p.artist, style: AppTypography.bodySmall),
                 const SizedBox(height: 8),
                 Text(
-                  p.rating,
+                  p.rating.toStringAsFixed(1),
                   style: AppTypography.bodySmall.copyWith(fontSize: 12),
                 ),
                 const SizedBox(height: 12),
@@ -318,11 +348,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      p.price,
+                      '\$${p.price.toStringAsFixed(2)}',
                       style: AppTypography.titleMedium
                           .copyWith(color: AppColors.accent),
                     ),
-                    _buildAddToCartButton(),
+                    _buildAddToCartButton(p),
                   ],
                 ),
               ],
@@ -354,12 +384,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildAddToCartButton() {
+  Widget _buildAddToCartButton(Product product) {
     return Material(
       color: AppColors.accent,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
-        onTap: null,
+        onTap: () {
+          context.read<CartProvider>().addToCart(product.id, 1);
+        },
         borderRadius: BorderRadius.circular(8),
         child: const Padding(
           padding: EdgeInsets.all(8),
@@ -370,6 +402,77 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInlineError() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 48),
+      child: Center(
+        child: Column(
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: AppColors.textSecondary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.wifi_off_outlined,
+                size: 36,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No Internet Connection',
+              style: AppTypography.titleLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Please check your connection and try again',
+              style: AppTypography.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: () {
+                _loadProducts(genre: _selectedGenreIndex == 0 ? null : _genres[_selectedGenreIndex]);
+              },
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShimmerGrid() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 4,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.63,
+      ),
+      itemBuilder: (context, index) {
+        return Shimmer.fromColors(
+          baseColor: AppColors.surfaceVariant,
+          highlightColor: AppColors.surface,
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
+            ),
+          ),
+        );
+      },
     );
   }
 

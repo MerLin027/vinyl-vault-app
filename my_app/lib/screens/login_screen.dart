@@ -2,8 +2,10 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../config/theme.dart';
+import '../providers/user_provider.dart';
 import '../widgets/vinyl_logo.dart';
 import '../widgets/nav_transition.dart'; // ignore: unused_import
 import 'main_screen.dart';
@@ -50,11 +52,23 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _isNavigating = false;
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
   // Password visibility toggle state
   bool _obscurePassword = true;
 
   @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<UserProvider>().isLoading;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
@@ -134,6 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   _buildInputSection(
                     label: 'Email',
                     hintText: 'Enter your email',
+                    controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     obscureText: false,
                   ),
@@ -155,6 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // ── Password field ───────────────────────────────────────────
                   TextField(
+                    controller: _passwordController,
                     obscureText: _obscurePassword,
                     style: AppTypography.bodyMedium.copyWith(
                       color: AppColors.textPrimary,
@@ -231,41 +247,76 @@ class _LoginScreenState extends State<LoginScreen> {
                         shadowColor: _colorPrimary10,
                         elevation: 8,
                       ),
-                      onPressed: () {
-                        if (_isNavigating) return;
-                        _isNavigating = true;
-                        Future.delayed(const Duration(milliseconds: 300), () {
-                          if (mounted) setState(() => _isNavigating = false);
-                        });
-                        Navigator.pushReplacement(
-                          context,
-                          PageRouteBuilder(
-                            pageBuilder: (context, animation,
-                                    secondaryAnimation) =>
-                                const MainScreen(),
-                            transitionsBuilder: (context, animation,
-                                secondaryAnimation, child) {
-                              return FadeTransition(
-                                opacity: animation.drive(
-                                  Tween<double>(begin: 0.0, end: 1.0)
-                                      .chain(CurveTween(curve: Curves.easeOut)),
-                                ),
-                                child: child,
-                              );
+                      onPressed: isLoading
+                          ? null
+                          : () async {
+                              final navigator = Navigator.of(context);
+                              final messenger = ScaffoldMessenger.of(context);
+                              final email = _emailController.text.trim();
+                              final password = _passwordController.text;
+
+                              if (email.isEmpty || password.isEmpty) {
+                                messenger.showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Email and password are required'),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              final userProvider = context.read<UserProvider>();
+                              final success = await userProvider.login(email, password);
+
+                              if (!mounted) return;
+
+                              if (success) {
+                                navigator.pushAndRemoveUntil(
+                                  PageRouteBuilder(
+                                    pageBuilder: (context, animation,
+                                            secondaryAnimation) =>
+                                        const MainScreen(),
+                                    transitionsBuilder: (context, animation,
+                                        secondaryAnimation, child) {
+                                      return FadeTransition(
+                                        opacity: animation.drive(
+                                          Tween<double>(begin: 0.0, end: 1.0)
+                                              .chain(CurveTween(curve: Curves.easeOut)),
+                                        ),
+                                        child: child,
+                                      );
+                                    },
+                                    transitionDuration:
+                                        const Duration(milliseconds: 300),
+                                  ),
+                                  (route) => false,
+                                );
+                              } else {
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      userProvider.error ?? 'Login failed',
+                                    ),
+                                  ),
+                                );
+                              }
                             },
-                            transitionDuration:
-                                const Duration(milliseconds: 300),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        'Log In',
-                        style: GoogleFonts.jost(
-                          color: _colorVaultDark,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                      child: isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: _colorVaultDark,
+                              ),
+                            )
+                          : Text(
+                              'Log In',
+                              style: GoogleFonts.jost(
+                                color: _colorVaultDark,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                     ),
                   ),
 
@@ -394,6 +445,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildInputSection({
     required String label,
     required String hintText,
+    required TextEditingController controller,
     required bool obscureText,
     TextInputType keyboardType = TextInputType.text,
   }) {
@@ -417,6 +469,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Text field: h-14(56px), px-4(16px), rounded-xl(12px),
         // bg-vault-input(#222420), focus:ring-2 focus:ring-primary
         TextField(
+          controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
           style: AppTypography.bodyMedium.copyWith(

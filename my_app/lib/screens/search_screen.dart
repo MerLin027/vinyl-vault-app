@@ -1,23 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
+
 import '../config/theme.dart';
+import '../models/product.dart';
+import '../providers/cart_provider.dart';
+import '../services/api_service.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import './product_detail_screen.dart';
 import '../widgets/nav_transition.dart';
-class _SearchResult {
-  const _SearchResult({
-    required this.imageUrl,
-    required this.title,
-    required this.artist,
-    required this.price,
-    required this.condition,
-  });
-  final String imageUrl;
-  final String title;
-  final String artist;
-  final String price;
-  final String condition;
-}
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -27,63 +21,126 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  // Genre filter chips state
-  final List<String> _genres = ['Jazz', 'Rock', 'Blues', 'Soul'];
-  final Set<String> _activeGenres = {'Jazz'};
+  final ApiService _apiService = ApiService();
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
 
-  // Decade filter chips state
-  final List<String> _decades = ['60s', '70s', '80s'];
-  final Set<String> _activeDecades = {'70s'};
+  List<String> _genres = <String>[];
+  List<String> _decades = <String>[];
+  List<String> _conditions = <String>[];
 
-  // Condition chips state
-  final List<String> _conditions = ['Mint', 'Near Mint'];
-  final Set<String> _activeConditions = {};
+  String? _selectedGenre;
+  String? _selectedDecade;
+  String? _selectedCondition;
 
-  static const _results = [
-    _SearchResult(
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuC8llUMcOoGtg6SqMNxi5SkCgJ4fhO69lcR0yuyxUs-IeuDR7Kmxri9fjC8cAPSeCd2Xsfz1raCVAbbZXau2xQWiUtqKzSuU8BffmkYBiHS6MlKNQ2vs07sshiMXLN8qKiW64UyTZpYAksnfcvENRa9XdsNx2W56UJNVQ0G3aZM2EWM829P7-Kspxev_E3osca65cuvf_kN_e1FTfyklmCuiNOHfASrwIIiIDpJUhgZH5Phtaubj6g7CoTIeH5RPSPhQXrztfcNzhf_',
-      title: 'Kind of Blue',
-      artist: 'Miles Davis',
-      price: r'$45.00',
-      condition: 'VG+',
-    ),
-    _SearchResult(
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuC_btb9HByjQ81AestgeaNejLx7dMZGsgpkNNGTlwuH5_V5RhPduviRs-kK-jeBV1CV5w6z12bDH8UBvO23mYtPpK4Nf9XzwXudfQyutrlThRSOyZ5A-0aja8ao5z_0oyCaXNmVAoL7tdh7K4K9ByBpbbwmlBNFgt65ksGttWcdyBcYc-iFfi2oZjVuBTZdfgozi0SMDYRdp8ALMm8WCoBCEmO6i_EJ7s1t1_wpBGlqf3u60uzJFBgWS2jReeta73kYTh9HkgIFRGKk',
-      title: 'A Love Supreme',
-      artist: 'John Coltrane',
-      price: r'$38.00',
-      condition: 'M',
-    ),
-    _SearchResult(
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuDhvXRnjSMSeNupU3Shp5xgG58f39ixNpHpiUDXObrQJYH51BVZJYtDEawM7zqnWGMlmoWyXkGPVSTBFvsH2ysaoX4N2SL3zsJgmjk4gQlCK4irnw16cQ5ZZrlBis1uOAGM-WHaiHr1_Np9GHjmS5Htmbqm45UCr8j4-OaN6ErK7Reod-10bnL812OyqOQRfbCeOTMfu8nikZmJC0Q7x120dK9axcLybqCcxGTJLPmswUTZq9PUPMxh0ezV8tLjDjvi_r1w8xI18AND',
-      title: 'Blue Train',
-      artist: 'John Coltrane',
-      price: r'$52.00',
-      condition: 'NM',
-    ),
-    _SearchResult(
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuB6NfGiVor3JBW3SK03JnRF7vawFEJqBelNXKeUvwo7CfSrwc4C7_r5bFoQ-HH5rfKc8yoCn4BxdZFQIDidT-0ax7smP5QnFBYrEMDJdcbrnDX-XsUAST2ra-NlSd93LkhPPPu9WHzIqPpMTUxe6QcM-8XIvFCfuCKiibnSsEwVMErqcT-JbWRTE2GlttspFNYrVJugqmz2v5suf9YdxgYEyzuO112mHN3e194NcMSHAELHSElHw3E9CxZEivCZbil4Gkq4VUjKHfov',
-      title: 'Time Out',
-      artist: 'The Dave Brubeck Quartet',
-      price: r'$32.00',
-      condition: 'VG',
-    ),
-  ];
+  List<Product> _results = <Product>[];
+  bool _isLoading = false;
+  String? _error;
 
-  void _showSnack(String msg) =>
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-  void _toggleChip(Set<String> set, String val) {
+  @override
+  void initState() {
+    super.initState();
+    _loadFilterOptionsAndSearch();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadFilterOptionsAndSearch() async {
     setState(() {
-      if (set.contains(val)) {
-        set.remove(val);
-      } else {
-        set.add(val);
-      }
+      _isLoading = true;
+      _error = null;
     });
+
+    try {
+      final allProducts = await _apiService.getProducts();
+      final genres = allProducts
+          .map((p) => p.genre)
+          .where((g) => g.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort();
+      final decades = allProducts
+          .map((p) => p.decade)
+          .where((d) => d.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort();
+      final conditions = allProducts
+          .map((p) => p.condition)
+          .where((c) => c.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort();
+
+      final results = await _apiService.getProducts(
+        genre: _selectedGenre,
+        decade: _selectedDecade,
+        condition: _selectedCondition,
+        search: _searchController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _genres = genres;
+        _decades = decades;
+        _conditions = conditions;
+        _results = results;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _searchProducts() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final results = await _apiService.getProducts(
+        genre: _selectedGenre,
+        decade: _selectedDecade,
+        condition: _selectedCondition,
+        search: _searchController.text.trim(),
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _results = results;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), _searchProducts);
   }
 
   @override
@@ -114,12 +171,13 @@ class _SearchScreenState extends State<SearchScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
               child: TextField(
+                controller: _searchController,
                 decoration: const InputDecoration(
                   hintText: 'Search albums, artists...',
                   prefixIcon: Icon(Icons.search),
                   suffixIcon: Icon(Icons.cancel_outlined),
                 ),
-                onChanged: (_) {},
+                onChanged: _onSearchChanged,
               ),
             ),
             // Filters header
@@ -132,12 +190,14 @@ class _SearchScreenState extends State<SearchScreen> {
                       style: AppTypography.labelLarge
                           .copyWith(color: AppColors.textSecondary)),
                   TextButton(
-                    onPressed: () =>
-                        setState(() {
-                          _activeGenres.clear();
-                          _activeDecades.clear();
-                          _activeConditions.clear();
-                        }),
+                    onPressed: () {
+                      setState(() {
+                        _selectedGenre = null;
+                        _selectedDecade = null;
+                        _selectedCondition = null;
+                      });
+                      _searchProducts();
+                    },
                     child: const Text('Clear All'),
                   ),
                 ],
@@ -146,32 +206,36 @@ class _SearchScreenState extends State<SearchScreen> {
             // Genre chips row
             _buildChipRow(
                 chips: _genres,
-                active: _activeGenres,
+                selected: _selectedGenre,
+                onChanged: (value) {
+                  setState(() => _selectedGenre = value);
+                  _searchProducts();
+                },
                 prefix: 'Genre: '),
             const SizedBox(height: 8),
             // Decade chips row
             _buildChipRow(
                 chips: _decades,
-                active: _activeDecades,
+                selected: _selectedDecade,
+                onChanged: (value) {
+                  setState(() => _selectedDecade = value);
+                  _searchProducts();
+                },
                 prefix: 'Decade: '),
             const SizedBox(height: 8),
             // Condition chips row
-            _buildChipRow(chips: _conditions, active: _activeConditions),
+            _buildChipRow(
+              chips: _conditions,
+              selected: _selectedCondition,
+              onChanged: (value) {
+                setState(() => _selectedCondition = value);
+                _searchProducts();
+              },
+            ),
             const SizedBox(height: 8),
             // Results grid
             Expanded(
-              child: GridView.builder(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.72,
-                ),
-                itemCount: _results.length,
-                itemBuilder: (_, i) => _buildSearchCard(_results[i]),
-              ),
+              child: _buildResultsSection(),
             ),
           ],
         ),
@@ -182,22 +246,23 @@ class _SearchScreenState extends State<SearchScreen> {
   // Horizontally scrollable chip filter row
   Widget _buildChipRow(
       {required List<String> chips,
-      required Set<String> active,
+      required String? selected,
+      required ValueChanged<String?> onChanged,
       String prefix = ''}) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: chips.map((chip) {
-          final selected = active.contains(chip);
+          final isSelected = selected == chip;
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
               label: Text('$prefix$chip'),
-              selected: selected,
+              selected: isSelected,
               backgroundColor: AppColors.surfaceVariant,
               selectedColor: AppColors.accent,
-              onSelected: (_) => _toggleChip(active, chip),
+              onSelected: (_) => onChanged(isSelected ? null : chip),
             ),
           );
         }).toList(),
@@ -206,12 +271,13 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   // Product search result card
-  Widget _buildSearchCard(_SearchResult r) {
+  Widget _buildSearchCard(Product r) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
-          fadeSlideRoute(const ProductDetailScreen()));
+          fadeSlideRoute(ProductDetailScreen(product: r)),
+        );
       },
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -230,17 +296,22 @@ class _SearchScreenState extends State<SearchScreen> {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.network(
-                      r.imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          Container(color: AppColors.surfaceVariant),
-                    ),
+                    if (r.images.isNotEmpty)
+                      Image.network(
+                        r.images.first,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Container(color: AppColors.surfaceVariant),
+                      )
+                    else
+                      Container(color: AppColors.surfaceVariant),
                     Positioned(
                       bottom: 8,
                       right: 8,
                       child: GestureDetector(
-                        onTap: () => _showSnack('Coming soon'),
+                        onTap: () {
+                          context.read<CartProvider>().addToCart(r.id, 1);
+                        },
                         child: Container(
                           width: 32,
                           height: 32,
@@ -269,7 +340,7 @@ class _SearchScreenState extends State<SearchScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(r.price,
+                Text('\$${r.price.toStringAsFixed(2)}',
                     style: AppTypography.titleMedium
                         .copyWith(color: AppColors.accent)),
                 Container(
@@ -288,6 +359,69 @@ class _SearchScreenState extends State<SearchScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildResultsSection() {
+    if (_isLoading) {
+      return GridView.builder(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.72,
+        ),
+        itemCount: 4,
+        itemBuilder: (context, index) => Shimmer.fromColors(
+          baseColor: AppColors.surfaceVariant,
+          highlightColor: AppColors.surface,
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border, width: 1),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            _error!,
+            style: AppTypography.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    if (_results.isEmpty) {
+      return Center(
+        child: Text(
+          'No records found',
+          style: AppTypography.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    return GridView.builder(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.72,
+      ),
+      itemCount: _results.length,
+      itemBuilder: (_, i) => _buildSearchCard(_results[i]),
     );
   }
 }

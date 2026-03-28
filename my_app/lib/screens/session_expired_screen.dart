@@ -122,9 +122,11 @@ class _SessionExpiredScreenState extends State<SessionExpiredScreen> {
                       Future.delayed(const Duration(milliseconds: 300), () {
                         if (mounted) setState(() => _isNavigating = false);
                       });
-                      Navigator.pushReplacement(
-                          context,
-                          fadeSlideRoute(const LoginScreen()));
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        fadeSlideRoute(const LoginScreen()),
+                        (route) => false,
+                      );
                     },
                     child: const Text('Log In'),
                   ),

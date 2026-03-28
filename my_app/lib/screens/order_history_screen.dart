@@ -1,24 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
+
 import '../config/theme.dart';
+import '../models/order.dart';
+import '../providers/order_provider.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import './order_detail_screen.dart';
 import '../widgets/nav_transition.dart';
-
-// Order data model
-class _OrderData {
-  const _OrderData({
-    required this.imageUrl,
-    required this.id,
-    required this.date,
-    required this.total,
-    required this.isDelivered,
-  });
-  final String imageUrl;
-  final String id;
-  final String date;
-  final String total;
-  final bool isDelivered; // false = 'Ordered' chip (shown first), true = 'Delivered'
-}
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -28,55 +17,25 @@ class OrderHistoryScreen extends StatefulWidget {
 }
 
 class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
-  // Orders sorted: active (Ordered) first, delivered last
-  static const _orders = [
-    _OrderData(
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuAyElZjUe4i9CwNLNFvP0dPySJuLkLUufiVrsxM8hzX_pdejx4IEJH-Q_Ntr4hlNesMBXH18TwbDhaOUgw1DuKS76PBaK4CPlOxuma2Wm5vUWJOvyfOIkWFUw-d8YyWDaeZKGwW62Sy6P1_dbyqGjR51zKDhwymI3dPV4ICf6VU7xUtW9jxM2IOp9bEvqloSUU-J_9GM7kLjIfjyC4BlKJqgi9oGp_AmTFcUfFqmAiKfmIG-Fv19X-v8CdiHfakE8_O9APJoxOlCo9k',
-      id: 'Order #VV-98405',
-      date: 'Oct 21, 2023 • 1 Item',
-      total: r'$32.50',
-      isDelivered: false,
-    ),
-    _OrderData(
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuDh8QNMYcrgyHboUOaeODjI9jSRCiOIZiBqV9Yoy67kksJS6Z2dRK-iQsQoiDBzdThZT81MCPNpm7ka4PYQGoavWk2NFHmoCraI2IBEj5-Ze5tnxTiWvYNt5zYDkuFZQJIDBaOZBei9_KOtrBqFXyrQozeoL4fD9whye7-4jjSZgHYVI9D9JtQmXRAT6_p3XYhBcXI93BVx32fQr4WuWJJuxuvfZHYwvlggmb2y7Y-xPQs5bul5y969yGDsNagA9H0Cg0UEVAESMNmS',
-      id: 'Order #VV-98392',
-      date: 'Oct 19, 2023 • 2 Items',
-      total: r'$89.99',
-      isDelivered: false,
-    ),
-    _OrderData(
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuBWvl9VIXYSNMZW-7I9nla6m3HHinM5DRi6-wcBMgX1i5ikO9bghT-idKKO2xNIx7suKPMMhcA3b8zxF9tV3_MXi-dYKiF2I1z7rf99ndvmaiwX65VEjTimmefQ2aIYWgnpgwi2gPUKmhPXVCXu_rG_ULXblOHs2c3ZVaT7lGd3PgQXj8lrSZRX-_sGbC8cHij_9HTLGKBuvXDxaqbbKsGb4P3EJI51EHwdPEACDRiHECDNEKE3KpTgw5m5t6RbfH7MANZiIMMaURC1',
-      id: 'Order #VV-98311',
-      date: 'Oct 12, 2023 • 1 Item',
-      total: r'$24.00',
-      isDelivered: false,
-    ),
-    _OrderData(
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuCSIZhqkDc8UmNvTu0VwQ6nRRaaiIpvIbpr-M61ql0BbJONkPSpX717WgWIOVyaZC7zN-Vl_KCSAcCzFnGMwVyiKiiB7zU5RF_rbHmUNrAHFeSeDSU0WAQmhPFqikBdMxP_NOCFLN38q_o5LrycLqfEWCgkPxaq3e8Ir3ZrRT7qvHRJFn9nf8uA_riDJjgb-VCSiOMKkwdQ5E-SVkY7B2hFkx6EpuLW0EN9EfDAomDW0_2U8GiY7y4Vrqu4UBVEpw7kemilvP4sARND',
-      id: 'Order #VV-98421',
-      date: 'Oct 24, 2023 • 3 Items',
-      total: r'$145.00',
-      isDelivered: true,
-    ),
-    _OrderData(
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuBGT6aC2YwXdmZ4AABmVQf2AnunuO3RzMCGdbOZee4bpQnd-0immYsxmS5H6kjAaRGR6tG4HfQsUx3LlBtNi9rfTMNqPPuN0P8yvRW8D0bjHygX30iQ_5mmmQwi9NG_qgAgy35mpBQw_Wqe1ZRCWEnZqykl5__AfsuUlOOlBxjySMUEDkdeR_1lyHxfonEwNXXSOlFuvVBKQHRlk7Q9-RRzdtWv0QY8Bxwo_OEJpP6oBii-zog4jfL4qK-DR-KLOdB1ZhEJMbnXgXcM',
-      id: 'Order #VV-98288',
-      date: 'Sep 28, 2023 • 4 Items',
-      total: r'$210.00',
-      isDelivered: true,
-    ),
-  ];
-
   void _showSnack(String msg) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 
   @override
+  void initState() {
+    super.initState();
+    context.read<OrderProvider>().loadOrders();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final orderProvider = context.watch<OrderProvider>();
+    final activeOrders = orderProvider.orders
+        .where((order) => _isActiveStatus(order.status))
+        .toList();
+    final deliveredOrders = orderProvider.orders
+        .where((order) => order.status.toLowerCase() == 'delivered')
+        .toList();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       // App bar — preserved exactly
@@ -98,29 +57,47 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         duration: const Duration(milliseconds: 200),
         switchInCurve: Curves.easeOut,
         child: SafeArea(
-          // Flat list — Ordered items first, Delivered items below
-          child: ListView.separated(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 48),
-            itemCount: _orders.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, i) => _buildOrderCard(_orders[i]),
-          ),
+          child: orderProvider.isLoading
+              ? _buildShimmerList()
+              : orderProvider.orders.isEmpty
+                  ? _buildEmptyState()
+                  : ListView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 48),
+                      children: [
+                        if (activeOrders.isNotEmpty) ...[
+                          Text('Active', style: AppTypography.titleLarge),
+                          const SizedBox(height: 12),
+                          ...activeOrders.map(_buildOrderCard),
+                          const SizedBox(height: 20),
+                        ],
+                        if (deliveredOrders.isNotEmpty) ...[
+                          Text('Delivered', style: AppTypography.titleLarge),
+                          const SizedBox(height: 12),
+                          ...deliveredOrders.map(_buildOrderCard),
+                        ],
+                      ],
+                    ),
         ),
       ),
     );
   }
 
   // Order card — thumbnail + order number/date + status chip + total + chevron
-  Widget _buildOrderCard(_OrderData o) {
-    final chipLabel = o.isDelivered ? 'Delivered' : 'Ordered';
+  Widget _buildOrderCard(Order o) {
+    final chipLabel = o.status;
     final chipTextColor =
-        o.isDelivered ? AppColors.accent : AppColors.textSecondary;
+        o.status.toLowerCase() == 'delivered' ? AppColors.accent : AppColors.textSecondary;
+
+    final itemCount = o.items.length;
+    final dateLabel =
+        '${_formatDate(o.createdAt)} • $itemCount ${itemCount == 1 ? 'Item' : 'Items'}';
 
     return GestureDetector(
       onTap: () => Navigator.push(
-          context, fadeSlideRoute(const OrderDetailScreen())),
+          context, fadeSlideRoute(OrderDetailScreen(order: o))),
       child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -130,19 +107,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         child: Row(
           children: [
             // Album thumbnail
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                o.imageUrl,
-                width: 64,
-                height: 64,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                    width: 64,
-                    height: 64,
-                    color: AppColors.surfaceVariant),
-              ),
-            ),
+            _buildOrderThumbs(o),
             const SizedBox(width: 16),
             // Order info — id, date, status chip
             Expanded(
@@ -153,7 +118,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(o.id,
+                        child: Text(o.orderNumber,
                             style: AppTypography.titleMedium,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis),
@@ -182,9 +147,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(o.date, style: AppTypography.bodySmall),
+                        child: Text(dateLabel, style: AppTypography.bodySmall),
                       ),
-                      Text(o.total, style: AppTypography.titleMedium),
+                      Text('\$${o.total.toStringAsFixed(2)}', style: AppTypography.titleMedium),
                       const SizedBox(width: 4),
                       const Icon(Icons.chevron_right,
                           color: AppColors.textSecondary, size: 20),
@@ -198,4 +163,118 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       ),
     );
   }
+
+  bool _isActiveStatus(String status) {
+    final normalized = status.toLowerCase();
+    return normalized == 'ordered' ||
+        normalized == 'processing' ||
+        normalized == 'shipped';
+  }
+
+  String _formatDate(DateTime date) {
+    final month = _months[date.month - 1];
+    return '$month ${date.day}, ${date.year}';
+  }
+
+  Widget _buildOrderThumbs(Order order) {
+    final thumbs = order.items
+        .map((item) => item.imageUrl)
+        .where((url) => url.isNotEmpty)
+        .take(3)
+        .toList();
+    final extra = order.items.length - thumbs.length;
+
+    return SizedBox(
+      width: 64,
+      height: 64,
+      child: Stack(
+        children: [
+          for (var i = 0; i < thumbs.length; i++)
+            Positioned(
+              left: i * 16,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  thumbs[i],
+                  width: 36,
+                  height: 64,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: 36,
+                    height: 64,
+                    color: AppColors.surfaceVariant,
+                  ),
+                ),
+              ),
+            ),
+          if (extra > 0)
+            Positioned(
+              right: 0,
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Center(
+                  child: Text(
+                    '+$extra',
+                    style: AppTypography.labelSmall,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Text(
+        'No orders yet',
+        style: AppTypography.bodyMedium,
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
+  Widget _buildShimmerList() {
+    return ListView.separated(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 48),
+      itemCount: 4,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        return Shimmer.fromColors(
+          baseColor: AppColors.surfaceVariant,
+          highlightColor: AppColors.surface,
+          child: Container(
+            height: 96,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border, width: 1),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  static const List<String> _months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
 }

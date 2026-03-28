@@ -1,21 +1,21 @@
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/widgets.dart';
 
-void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-  test('generate splash image', () async {
-    // 1. Download fonts
-    await _downloadAndLoadFont('TenorSans', 'https://github.com/google/fonts/raw/main/ofl/tenorsans/TenorSans-Regular.ttf');
-    await _downloadAndLoadFont('Jost', 'https://github.com/google/fonts/raw/main/ofl/jost/Jost-Italic.ttf');
+  // 1. Download fonts
+  await _downloadAndLoadFont('TenorSans', 'https://github.com/google/fonts/raw/main/ofl/tenorsans/TenorSans-Regular.ttf');
+  await _downloadAndLoadFont('Jost', 'https://github.com/google/fonts/raw/main/ofl/jost/Jost-Italic.ttf');
 
-    const int width = 800;
-    const int height = 600;
+  const int width = 800;
+  const int height = 600;
 
-    final recorder = ui.PictureRecorder();
-    final canvas = ui.Canvas(recorder, ui.Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()));
+  final recorder = ui.PictureRecorder();
+  final canvas = ui.Canvas(recorder, ui.Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()));
 
     // Background
     canvas.drawRect(ui.Rect.fromLTWH(0, 0, width.toDouble(), height.toDouble()), ui.Paint()..color = const ui.Color(0xFF111211));
@@ -59,17 +59,16 @@ void main() {
     final image = await picture.toImage(width, height);
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
 
-    final file = File('assets/images/splash_logo.png');
-    file.parent.createSync(recursive: true);
-    await file.writeAsBytes(byteData!.buffer.asUint8List());
-    print('Saved: assets/images/splash_logo.png');
-  });
+  final file = File('assets/images/splash_logo.png');
+  file.parent.createSync(recursive: true);
+  await file.writeAsBytes(byteData!.buffer.asUint8List());
+  debugPrint('Saved: assets/images/splash_logo.png');
 }
 
 Future<void> _downloadAndLoadFont(String family, String url) async {
   final file = File('.dart_tool/$family.ttf');
   if (!file.existsSync()) {
-    print('Downloading $family...');
+    debugPrint('Downloading $family...');
     final request = await HttpClient().getUrl(Uri.parse(url));
     final response = await request.close();
     await response.pipe(file.openWrite());

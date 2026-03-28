@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../config/theme.dart';
+import '../providers/cart_provider.dart';
+import '../providers/order_provider.dart';
+import '../providers/user_provider.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
-import './order_history_screen.dart';
 import './login_screen.dart';
 import './edit_profile_screen.dart';
+import './main_screen.dart';
 import '../widgets/nav_transition.dart';
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -15,11 +20,24 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _isNavigating = false;
 
+  @override
+  void initState() {
+    super.initState();
+    final userProvider = context.read<UserProvider>();
+    if (userProvider.currentUser == null) {
+      userProvider.loadProfile();
+    }
+  }
+
   void _showSnack(String msg) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = context.watch<UserProvider>();
+    final cartProvider = context.watch<CartProvider>();
+    final orderProvider = context.watch<OrderProvider>();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -42,10 +60,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 const SizedBox(height: 24),
                 // Avatar + user info
-                _buildUserHeader(),
+                _buildUserHeader(userProvider),
                 const SizedBox(height: 24),
                 // Stats row
-                _buildStatsRow(),
+                _buildStatsRow(orderProvider.orders.length, cartProvider.itemCount),
                 const SizedBox(height: 24),
                 // Account settings section
                 Text(
@@ -92,7 +110,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _buildMenuItem(
                   icon: Icons.shopping_bag_outlined,
                   label: 'Order History',
-                  badge: '12',
+                  badge: '${orderProvider.orders.length}',
                   onTap: () {
                     if (_isNavigating) return;
                     _isNavigating = true;
@@ -101,7 +119,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     });
                     Navigator.push(
                         context,
-                        fadeSlideRoute(const OrderHistoryScreen()));
+                        fadeSlideRoute(const MainScreen(initialIndex: 3)));
                   },
                 ),
                 const SizedBox(height: 8),
@@ -131,14 +149,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.logout,
                   label: 'Log Out',
                   isAccent: true,
-                  onTap: () {
+                  onTap: () async {
+                    final userProviderRead = context.read<UserProvider>();
+                    final cartProviderRead = context.read<CartProvider>();
+                    final orderProviderRead = context.read<OrderProvider>();
+                    final navigator = Navigator.of(context);
+
                     if (_isNavigating) return;
                     _isNavigating = true;
                     Future.delayed(const Duration(milliseconds: 300), () {
                       if (mounted) setState(() => _isNavigating = false);
                     });
-                    Navigator.pushAndRemoveUntil(
-                        context,
+
+                    await userProviderRead.logout();
+                    cartProviderRead.reset();
+                    orderProviderRead.reset();
+
+                    if (!mounted) return;
+
+                    navigator.pushAndRemoveUntil(
                         fadeSlideRoute(const LoginScreen()),
                         (route) => false);
                   },
@@ -152,7 +181,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Avatar circle + name + email
-  Widget _buildUserHeader() {
+  Widget _buildUserHeader(UserProvider userProvider) {
+    final username = userProvider.currentUser?.username ?? '';
+    final email = userProvider.currentUser?.email ?? '';
+    final initial = username.isNotEmpty ? username.characters.first.toUpperCase() : '?';
+
     return Center(
       child: Column(
         children: [
@@ -169,7 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: Center(
                   child: Text(
-                    'JD',
+                    initial,
                     style: AppTypography.displayLarge
                         .copyWith(fontSize: 40, fontWeight: FontWeight.w800),
                   ),
@@ -195,10 +228,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          Text('Julian Denson', style: AppTypography.headlineLarge),
+          Text(username, style: AppTypography.headlineLarge),
           const SizedBox(height: 4),
           Text(
-            'julian.vinyl@provider.com',
+            email,
             style: AppTypography.bodyMedium.copyWith(
               color: AppColors.accent.withValues(alpha: 0.8),
             ),
@@ -209,12 +242,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Collection / Wishlist stats
-  Widget _buildStatsRow() {
+  Widget _buildStatsRow(int collectionCount, int wishlistCount) {
     return Row(
       children: [
-        Expanded(child: _buildStatCard('COLLECTION', '124')),
+        Expanded(child: _buildStatCard('COLLECTION', '$collectionCount')),
         const SizedBox(width: 12),
-        Expanded(child: _buildStatCard('WISHLIST', '38')),
+        Expanded(child: _buildStatCard('WISHLIST', '$wishlistCount')),
       ],
     );
   }

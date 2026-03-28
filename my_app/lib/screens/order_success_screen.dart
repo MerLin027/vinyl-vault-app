@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+
 import '../config/theme.dart';
+import './main_screen.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
-import './home_screen.dart';
-import './order_history_screen.dart';
 import '../widgets/nav_transition.dart';
 class OrderSuccessScreen extends StatefulWidget {
-  const OrderSuccessScreen({super.key});
+  const OrderSuccessScreen({super.key, required this.orderNumber});
+
+  final String orderNumber;
 
   @override
   State<OrderSuccessScreen> createState() => _OrderSuccessScreenState();
@@ -89,7 +91,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text('#VV-98231', style: AppTypography.headlineLarge),
+                    Text(widget.orderNumber, style: AppTypography.headlineLarge),
                     const Divider(height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -115,7 +117,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                   height: 180,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
+                  errorBuilder: (context, error, stackTrace) =>
                       Container(height: 180, color: AppColors.surfaceVariant),
                 ),
               ),
@@ -130,7 +132,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                   });
                   Navigator.pushReplacement(
                       context,
-                      fadeSlideRoute(const HomeScreen()));
+                      fadeSlideRoute(const MainScreen(initialIndex: 0)));
                 },
                 child: const Text('Continue Shopping'),
               ),
@@ -145,7 +147,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                   });
                   Navigator.pushReplacement(
                       context,
-                      fadeSlideRoute(const OrderHistoryScreen()));
+                      fadeSlideRoute(const MainScreen(initialIndex: 3)));
                 },
                 child: const Text('View Orders'),
               ),

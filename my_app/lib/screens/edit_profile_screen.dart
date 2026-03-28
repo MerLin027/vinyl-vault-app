@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart'; // ignore: unused_import
+import 'package:provider/provider.dart';
+
 import '../config/theme.dart';
+import '../providers/user_provider.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 
 class EditProfileScreen extends StatefulWidget {
@@ -11,20 +14,20 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  // Form controllers pre-filled with placeholder profile data
+  // Form controllers pre-filled from profile data
   late final TextEditingController _nameCtrl;
   late final TextEditingController _emailCtrl;
   late final TextEditingController _phoneCtrl;
-  late final TextEditingController _bioCtrl;
+  late final TextEditingController _addressCtrl;
 
   @override
   void initState() {
     super.initState();
-    _nameCtrl = TextEditingController(text: 'John Doe');
-    _emailCtrl = TextEditingController(text: 'john.doe@example.com');
-    _phoneCtrl = TextEditingController(text: '+1 (555) 000-0000');
-    _bioCtrl = TextEditingController(
-        text: "Audiophile and vintage vinyl collector. Spinning classics since '98.");
+    final user = context.read<UserProvider>().currentUser;
+    _nameCtrl = TextEditingController(text: user?.username ?? '');
+    _emailCtrl = TextEditingController(text: user?.email ?? '');
+    _phoneCtrl = TextEditingController(text: user?.phone ?? '');
+    _addressCtrl = TextEditingController(text: user?.address ?? '');
   }
 
   @override
@@ -32,7 +35,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameCtrl.dispose();
     _emailCtrl.dispose();
     _phoneCtrl.dispose();
-    _bioCtrl.dispose();
+    _addressCtrl.dispose();
     super.dispose();
   }
 
@@ -40,12 +43,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 
   // Save changes and pop back to ProfileScreen
-  void _onSave() {
-    Navigator.pop(context);
+  Future<void> _onSave() async {
+    final userProvider = context.read<UserProvider>();
+    final success = await userProvider.updateProfile(
+      username: _nameCtrl.text.trim(),
+      phone: _phoneCtrl.text.trim(),
+      address: _addressCtrl.text.trim(),
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      _showSnack('Profile updated');
+      Navigator.pop(context);
+    } else {
+      _showSnack(userProvider.error ?? 'Failed to update profile');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<UserProvider>().isLoading;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       // App bar — no back arrow, automaticallyImplyLeading: false
@@ -91,11 +110,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       keyboardType: TextInputType.phone,
                     ),
                     const SizedBox(height: 16),
-                    // Bio multi-line textarea (4 rows)
-                    _buildBioField(),
+                    // Address multi-line field
+                    _buildAddressField(),
                     const SizedBox(height: 20),
                     // Save Changes primary action button
-                    _buildSaveButton(),
+                    _buildSaveButton(isLoading),
                   ],
                 ),
               ),
@@ -201,38 +220,47 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  // Bio multi-line textarea — 4 visible lines, no resize
-  Widget _buildBioField() {
+  // Address multi-line field
+  Widget _buildAddressField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Bio label
+        // Address label
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
-            'Bio',
+            'Address',
             style: AppTypography.labelLarge.copyWith(
               color: AppColors.textSecondary,
             ),
           ),
         ),
-        // Multi-line TextField equivalent of <textarea rows="4">
+        // Multi-line TextField for address
         TextField(
-          controller: _bioCtrl,
+          controller: _addressCtrl,
           maxLines: 4,
-          minLines: 4,
+          minLines: 3,
           keyboardType: TextInputType.multiline,
-          decoration: const InputDecoration(hintText: 'Tell us about yourself'),
+          decoration: const InputDecoration(hintText: 'Enter your address'),
         ),
       ],
     );
   }
 
   // Save Changes — ElevatedButton with theme defaults, pops on tap
-  Widget _buildSaveButton() {
+  Widget _buildSaveButton(bool isLoading) {
     return ElevatedButton(
-      onPressed: _onSave,
-      child: const Text('Save Changes'),
+      onPressed: isLoading ? null : _onSave,
+      child: isLoading
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.background,
+              ),
+            )
+          : const Text('Save Changes'),
     );
   }
 }

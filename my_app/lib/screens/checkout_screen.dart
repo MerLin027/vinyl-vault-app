@@ -1,42 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../config/theme.dart';
+import '../models/cart_item.dart';
+import '../providers/cart_provider.dart';
+import '../providers/order_provider.dart';
+import '../providers/user_provider.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
+import './order_failed_screen.dart';
 import './order_success_screen.dart';
 import '../widgets/nav_transition.dart';
 
 class CheckoutScreen extends StatefulWidget {
-  const CheckoutScreen({super.key});
+  const CheckoutScreen({super.key, this.items, this.total});
+
+  final List<CartItem>? items;
+  final double? total;
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  bool _isNavigating = false;
-  final List<int> _quantities = [1, 1];
-
-  static const _items = [
-    (
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuACe2jnkwaRFgU2KkHerOXOtP3ZTltzZOlpZWdxoCqWP_3Z1Puj11q_qAET3ZrV5GEAynYwYFwxWeqs4G51SJMOpgWo_V3Zz5-bLu12MVniX1Uoi13LgkIrBZqi2FoCDSMDId3R8h1blh5hHDitsLN1bP6RuDc-USpS7vwbbGf0lRl9gldnR1Vd86DqCu73M015yS2sOs2Mozmw5u1v3MFcirpcpPTAjrkPtg6qlsd60F7wCDELrZe0U0AUJ5t7rJDJL7gmJy7qf4Kt',
-      title: 'Midnights',
-      artist: 'Taylor Swift',
-      price: r'$29.99',
-    ),
-    (
-      imageUrl:
-          'https://lh3.googleusercontent.com/aida-public/AB6AXuBKBKfaE0r6ybgtXJ07IldaNjDAD03ukCO271rVfhtFzfnSGxCa0luixhF1VlglNYQGnOfRuOyRXzcOdwu6o9QOCCeYuB8RwjMb2a4I7caLiy-Oxz-UkQ2eStdw3l-R4qdprBSlP_QqA5hHkk6gMr6MkASEAM1t1gKnsRrwU0PCH24olD1Iv7mB3emHGvJ23tbZedlmv5C8wvQpsW21hstIL0Wy8PCdNGR0SLsKFi7j_Fsc4uf39dhQohlxApYZDw5oVA70OxdiAhbe',
-      title: 'Rumours',
-      artist: 'Fleetwood Mac',
-      price: r'$35.00',
-    ),
-  ];
+  final TextEditingController _shippingAddressCtrl = TextEditingController();
+  bool _didPrefillAddress = false;
 
   void _showSnack(String msg) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 
   @override
+  void dispose() {
+    _shippingAddressCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final cartProvider = context.watch<CartProvider>();
+    final orderProvider = context.watch<OrderProvider>();
+    final userProvider = context.watch<UserProvider>();
+
+    if (!_didPrefillAddress) {
+      final address = userProvider.currentUser?.address ?? '';
+      if (address.isNotEmpty) {
+        _shippingAddressCtrl.text = address;
+      }
+      _didPrefillAddress = true;
+    }
+
+    final checkoutItems = widget.items ?? cartProvider.items;
+    final total = widget.total ?? cartProvider.total;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -54,25 +68,68 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 16),
+              TextField(
+                controller: _shippingAddressCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Shipping Address',
+                  hintText: 'Enter your shipping address',
+                  prefixIcon: Icon(Icons.location_on_outlined),
+                ),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 16),
               // Cart items review
-              ..._items.asMap().entries.map((e) => _buildItemRow(e.key, e.value)),
+              ...checkoutItems.asMap().entries.map((e) => _buildItemRow(e.key, e.value)),
               const SizedBox(height: 20),
               // Order summary
-              _buildOrderSummary(),
+              _buildOrderSummary(cartProvider, total),
               const SizedBox(height: 20),
               // Place order button
               ElevatedButton(
-                onPressed: () {
-                  if (_isNavigating) return;
-                  _isNavigating = true;
-                  Future.delayed(const Duration(milliseconds: 300), () {
-                    if (mounted) setState(() => _isNavigating = false);
-                  });
-                  Navigator.pushReplacement(
-                    context,
-                    fadeSlideRoute(const OrderSuccessScreen()));
-                },
-                child: const Text('Place Order'),
+                onPressed: orderProvider.isLoading
+                    ? null
+                    : () async {
+                        final orderProviderRead = context.read<OrderProvider>();
+                        final navigator = Navigator.of(context);
+
+                        if (checkoutItems.isEmpty) {
+                          _showSnack('Your cart is empty');
+                          return;
+                        }
+
+                        final shippingAddress = _shippingAddressCtrl.text.trim();
+                        if (shippingAddress.isEmpty) {
+                          _showSnack('Shipping address is required');
+                          return;
+                        }
+
+                        final success = await orderProviderRead
+                            .placeOrder(shippingAddress);
+
+                        if (!mounted) return;
+
+                        if (success) {
+                          final orderNumber =
+                              orderProviderRead.currentOrder?.orderNumber ?? '';
+                          navigator.pushReplacement(
+                            fadeSlideRoute(OrderSuccessScreen(orderNumber: orderNumber)),
+                          );
+                        } else {
+                          navigator.pushReplacement(
+                            fadeSlideRoute(const OrderFailedScreen()),
+                          );
+                        }
+                      },
+                child: orderProvider.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.background,
+                        ),
+                      )
+                    : const Text('Place Order'),
               ),
             ],
           ),
@@ -82,7 +139,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   // Item review row
-  Widget _buildItemRow(int index, dynamic item) {
+  Widget _buildItemRow(int index, CartItem item) {
+    final imageUrl = item.imageUrl;
+    final title = item.title;
+    final artist = item.artist;
+    final price = '\$${item.price.toStringAsFixed(2)}';
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Container(
@@ -97,11 +159,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
-                item.imageUrl,
+                imageUrl,
                 width: 80,
                 height: 80,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (context, error, stackTrace) => Container(
                     width: 80, height: 80, color: AppColors.surfaceVariant),
               ),
             ),
@@ -110,13 +172,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item.title,
+                  Text(title,
                       style: AppTypography.titleLarge,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
-                  Text(item.artist, style: AppTypography.bodySmall),
+                  Text(artist, style: AppTypography.bodySmall),
                   const SizedBox(height: 6),
-                  Text(item.price,
+                  Text(price,
                       style: AppTypography.titleMedium
                           .copyWith(color: AppColors.accent)),
                 ],
@@ -128,9 +190,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 IconButton(
                   icon: const Icon(Icons.delete_outline, size: 22),
                   color: AppColors.textSecondary,
-                  onPressed: () => _showSnack('Coming soon'),
+                  onPressed: () async {
+                    await context.read<CartProvider>().removeItem(item.productId);
+                  },
                 ),
-                _buildQtyControl(index),
+                _buildQtyControl(item),
               ],
             ),
           ],
@@ -139,7 +203,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _buildQtyControl(int index) {
+  Widget _buildQtyControl(CartItem item) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -151,15 +215,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           GestureDetector(
-            onTap: () =>
-                setState(() { if (_quantities[index] > 1) _quantities[index]--; }),
+            onTap: () async {
+              if (item.quantity > 1) {
+                await context
+                    .read<CartProvider>()
+                    .updateQuantity(item.productId, item.quantity - 1);
+              }
+            },
             child: const Icon(Icons.remove, size: 16, color: AppColors.textSecondary),
           ),
           const SizedBox(width: 12),
-          Text('${_quantities[index]}', style: AppTypography.titleMedium),
+          Text('${item.quantity}', style: AppTypography.titleMedium),
           const SizedBox(width: 12),
           GestureDetector(
-            onTap: () => setState(() => _quantities[index]++),
+            onTap: () async {
+              await context
+                  .read<CartProvider>()
+                  .updateQuantity(item.productId, item.quantity + 1);
+            },
             child: const Icon(Icons.add, size: 16, color: AppColors.textSecondary),
           ),
         ],
@@ -168,7 +241,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   // Order summary section
-  Widget _buildOrderSummary() {
+  Widget _buildOrderSummary(CartProvider cartProvider, double total) {
+    final subtotal = cartProvider.subtotal;
+    final shipping = cartProvider.shipping;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -181,15 +257,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         children: [
           Text('Order Summary', style: AppTypography.headlineMedium),
           const SizedBox(height: 16),
-          _row('Subtotal', r'$64.99'),
+          _row('Subtotal', '\$${subtotal.toStringAsFixed(2)}'),
           const SizedBox(height: 8),
-          _row('Shipping', r'$5.00'),
+          _row('Shipping', '\$${shipping.toStringAsFixed(2)}'),
           const Divider(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Total', style: AppTypography.titleLarge),
-              Text(r'$69.99',
+              Text('\$${total.toStringAsFixed(2)}',
                   style: AppTypography.headlineMedium
                       .copyWith(color: AppColors.accent)),
             ],
