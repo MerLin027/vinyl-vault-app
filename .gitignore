@@ -6,3 +6,6 @@ my_app/.agent/
 
 # Ignore HTML screens
 /screens/
+
+# Ignore workflow docs
+/WORKFLOW.md
