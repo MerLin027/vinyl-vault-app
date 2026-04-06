@@ -21,52 +21,64 @@ class ApiService {
 			: _authService = authService ?? AuthService();
 
 	Future<void> _handleUnauthorized() async {
-		final context = navigatorKey?.currentContext;
-		if (context == null) {
-			return;
+		try {
+			final context = navigatorKey?.currentContext;
+			if (context == null) {
+				return;
+			}
+
+			await _authService.deleteToken();
+
+			if (_isSessionExpiredModalShown) {
+				return;
+			}
+
+			if (!context.mounted) {
+				return;
+			}
+
+			_isSessionExpiredModalShown = true;
+
+			showDialog<void>(
+				context: context,
+				barrierDismissible: false,
+				builder: (_) => const SessionExpiredScreen(),
+			).whenComplete(() {
+				_isSessionExpiredModalShown = false;
+			});
+		} catch (e) {
+			rethrow;
 		}
-
-		await _authService.deleteToken();
-
-		if (_isSessionExpiredModalShown) {
-			return;
-		}
-
-		if (!context.mounted) {
-			return;
-		}
-
-		_isSessionExpiredModalShown = true;
-
-		showDialog<void>(
-			context: context,
-			barrierDismissible: false,
-			builder: (_) => const SessionExpiredScreen(),
-		).whenComplete(() {
-			_isSessionExpiredModalShown = false;
-		});
 	}
 
 	Future<void> _throwIfUnauthorized(http.Response response) async {
-		if (response.statusCode == 401) {
-			await _handleUnauthorized();
-			throw Exception('Session expired');
+		try {
+			if (response.statusCode == 401) {
+				await _handleUnauthorized();
+				throw Exception('Session expired');
+			}
+		} catch (e) {
+			rethrow;
 		}
 	}
 
 	Future<Map<String, String>> _getHeaders({bool requiresAuth = true}) async {
-		final headers = <String, String>{
-			'Content-Type': 'application/json',
-		};
+		try {
+			final headers = <String, String>{
+				'Content-Type': 'application/json',
+			};
 
-		if (requiresAuth) {
-			final token = await _authService.getToken();
-			if (token != null && token.isNotEmpty) {
-				headers['Authorization'] = 'Bearer $token';
+			if (requiresAuth) {
+				final token = await _authService.getToken();
+				if (token != null && token.isNotEmpty) {
+					headers['Authorization'] = 'Bearer $token';
+				}
 			}
-		}
 
-		return headers;
+			return headers;
+		} catch (e) {
+			rethrow;
+		}
 	}
 
 	Future<List<Product>> getProducts({
@@ -75,388 +87,436 @@ class ApiService {
 		String? condition,
 		String? search,
 	}) async {
-		final queryParams = <String, String>{};
-		if (genre != null && genre.isNotEmpty) queryParams['genre'] = genre;
-		if (decade != null && decade.isNotEmpty) queryParams['decade'] = decade;
-		if (condition != null && condition.isNotEmpty) {
-			queryParams['condition'] = condition;
-		}
-		if (search != null && search.isNotEmpty) queryParams['search'] = search;
+		try {
+			final queryParams = <String, String>{};
+			if (genre != null && genre.isNotEmpty) queryParams['genre'] = genre;
+			if (decade != null && decade.isNotEmpty) queryParams['decade'] = decade;
+			if (condition != null && condition.isNotEmpty) {
+				queryParams['condition'] = condition;
+			}
+			if (search != null && search.isNotEmpty) queryParams['search'] = search;
 
-		final uri = Uri.parse('${Constants.apiBaseUrl}/products')
-				.replace(queryParameters: queryParams.isEmpty ? null : queryParams);
+			final uri = Uri.parse('${Constants.apiBaseUrl}/products')
+					.replace(queryParameters: queryParams.isEmpty ? null : queryParams);
 
-		final response = await http.get(
-			uri,
-			headers: await _getHeaders(requiresAuth: false),
-		);
+			final response = await http.get(
+				uri,
+				headers: await _getHeaders(requiresAuth: false),
+			);
 
-		await _throwIfUnauthorized(response);
 
-		if (response.statusCode != 200) {
-			var message = 'Failed to fetch products';
-			try {
-				final data = jsonDecode(response.body);
-				if (data is Map<String, dynamic> &&
-						data['message'] is String &&
-						(data['message'] as String).isNotEmpty) {
-					message = data['message'] as String;
-				}
-			} catch (_) {}
-			throw Exception(message);
-		}
+			await _throwIfUnauthorized(response);
 
-		final decoded = jsonDecode(response.body);
+			if (response.statusCode != 200) {
+				var message = 'Failed to fetch products';
+				try {
+					final data = jsonDecode(response.body);
+					if (data is Map<String, dynamic> &&
+							data['message'] is String &&
+							(data['message'] as String).isNotEmpty) {
+						message = data['message'] as String;
+					}
+				} catch (_) {}
+				throw Exception(message);
+			}
 
-		if (decoded is List) {
-			return decoded
-					.map((item) => Product.fromJson((item as Map).cast<String, dynamic>()))
-					.toList();
-		}
+			final decoded = jsonDecode(response.body);
 
-		if (decoded is Map<String, dynamic>) {
-			final dynamic listData = decoded['products'] ?? decoded['data'] ?? decoded['items'];
-			if (listData is List) {
-				return listData
+			if (decoded is List) {
+				return decoded
 						.map((item) => Product.fromJson((item as Map).cast<String, dynamic>()))
 						.toList();
 			}
-		}
 
-		return <Product>[];
+			if (decoded is Map<String, dynamic>) {
+				final dynamic listData = decoded['products'] ?? decoded['data'] ?? decoded['items'];
+				if (listData is List) {
+					return listData
+							.map((item) => Product.fromJson((item as Map).cast<String, dynamic>()))
+							.toList();
+				}
+			}
+
+			return <Product>[];
+		} catch (e) {
+			rethrow;
+		}
 	}
 
 	Future<Product> getProductById(String id) async {
-		final response = await http.get(
-			Uri.parse('${Constants.apiBaseUrl}/products/$id'),
-			headers: await _getHeaders(requiresAuth: false),
-		);
+		try {
+			final response = await http.get(
+				Uri.parse('${Constants.apiBaseUrl}/products/$id'),
+				headers: await _getHeaders(requiresAuth: false),
+			);
 
-		await _throwIfUnauthorized(response);
+			await _throwIfUnauthorized(response);
 
-		if (response.statusCode != 200) {
-			var message = 'Failed to fetch product';
-			try {
-				final data = jsonDecode(response.body);
-				if (data is Map<String, dynamic> &&
-						data['message'] is String &&
-						(data['message'] as String).isNotEmpty) {
-					message = data['message'] as String;
-				}
-			} catch (_) {}
-			throw Exception(message);
-		}
-
-		final decoded = jsonDecode(response.body);
-		if (decoded is Map<String, dynamic>) {
-			final productData = decoded['product'] ?? decoded['data'] ?? decoded;
-			if (productData is Map) {
-				return Product.fromJson(productData.cast<String, dynamic>());
+			if (response.statusCode != 200) {
+				var message = 'Failed to fetch product';
+				try {
+					final data = jsonDecode(response.body);
+					if (data is Map<String, dynamic> &&
+							data['message'] is String &&
+							(data['message'] as String).isNotEmpty) {
+						message = data['message'] as String;
+					}
+				} catch (_) {}
+				throw Exception(message);
 			}
-		}
 
-		throw Exception('Invalid product response');
+			final decoded = jsonDecode(response.body);
+			if (decoded is Map<String, dynamic>) {
+				final productData = decoded['product'] ?? decoded['data'] ?? decoded;
+				if (productData is Map) {
+					return Product.fromJson(productData.cast<String, dynamic>());
+				}
+			}
+
+			throw Exception('Invalid product response');
+		} catch (e) {
+			rethrow;
+		}
 	}
 
 	Future<List<CartItem>> getCart() async {
-		final response = await http.get(
-			Uri.parse('${Constants.apiBaseUrl}/cart'),
-			headers: await _getHeaders(),
-		);
+		try {
+			final response = await http.get(
+				Uri.parse('${Constants.apiBaseUrl}/cart'),
+				headers: await _getHeaders(),
+			);
 
-		await _throwIfUnauthorized(response);
+			await _throwIfUnauthorized(response);
 
-		if (response.statusCode != 200) {
-			var message = 'Failed to fetch cart';
-			try {
-				final data = jsonDecode(response.body);
-				if (data is Map<String, dynamic> &&
-						data['message'] is String &&
-						(data['message'] as String).isNotEmpty) {
-					message = data['message'] as String;
-				}
-			} catch (_) {}
-			throw Exception(message);
-		}
-
-		final decoded = jsonDecode(response.body);
-		if (decoded is Map<String, dynamic>) {
-			final items = decoded['items'];
-			if (items is List) {
-				return items
-						.map((item) => CartItem.fromJson((item as Map).cast<String, dynamic>()))
-						.toList();
+			if (response.statusCode != 200) {
+				var message = 'Failed to fetch cart';
+				try {
+					final data = jsonDecode(response.body);
+					if (data is Map<String, dynamic> &&
+							data['message'] is String &&
+							(data['message'] as String).isNotEmpty) {
+						message = data['message'] as String;
+					}
+				} catch (_) {}
+				throw Exception(message);
 			}
-		}
 
-		return <CartItem>[];
+			final decoded = jsonDecode(response.body);
+			if (decoded is Map<String, dynamic>) {
+				final items = decoded['items'];
+				if (items is List) {
+					return items
+							.map((item) => CartItem.fromJson((item as Map).cast<String, dynamic>()))
+							.toList();
+				}
+			}
+
+			return <CartItem>[];
+		} catch (e) {
+			rethrow;
+		}
 	}
 
 	Future<void> addToCart(String productId, int quantity) async {
-		final response = await http.post(
-			Uri.parse('${Constants.apiBaseUrl}/cart'),
-			headers: await _getHeaders(),
-			body: jsonEncode({
-				'productId': productId,
-				'quantity': quantity,
-			}),
-		);
+		try {
+			final response = await http.post(
+				Uri.parse('${Constants.apiBaseUrl}/cart'),
+				headers: await _getHeaders(),
+				body: jsonEncode({
+					'productId': productId,
+					'quantity': quantity,
+				}),
+			);
 
-		await _throwIfUnauthorized(response);
-
-		if (response.statusCode != 200) {
-			var message = 'Failed to add item to cart';
-			try {
-				final data = jsonDecode(response.body);
-				if (data is Map<String, dynamic> &&
-						data['message'] is String &&
-						(data['message'] as String).isNotEmpty) {
-					message = data['message'] as String;
-				}
-			} catch (_) {}
-			throw Exception(message);
+			await _throwIfUnauthorized(response);
+			if (response.statusCode != 200) {
+				var message = 'Failed to add item to cart';
+				try {
+					final data = jsonDecode(response.body);
+					if (data is Map<String, dynamic> &&
+							data['message'] is String &&
+							(data['message'] as String).isNotEmpty) {
+						message = data['message'] as String;
+					}
+				} catch (_) {}
+				throw Exception(message);
+			}
+		} catch (e) {
+			rethrow;
 		}
 	}
 
 	Future<void> updateCartItem(String productId, int quantity) async {
-		final response = await http.put(
-			Uri.parse('${Constants.apiBaseUrl}/cart/$productId'),
-			headers: await _getHeaders(),
-			body: jsonEncode({'quantity': quantity}),
-		);
+		try {
+			final response = await http.put(
+				Uri.parse('${Constants.apiBaseUrl}/cart/$productId'),
+				headers: await _getHeaders(),
+				body: jsonEncode({'quantity': quantity}),
+			);
 
-		await _throwIfUnauthorized(response);
+			await _throwIfUnauthorized(response);
 
-		if (response.statusCode != 200) {
-			var message = 'Failed to update cart item';
-			try {
-				final data = jsonDecode(response.body);
-				if (data is Map<String, dynamic> &&
-						data['message'] is String &&
-						(data['message'] as String).isNotEmpty) {
-					message = data['message'] as String;
-				}
-			} catch (_) {}
-			throw Exception(message);
+			if (response.statusCode != 200) {
+				var message = 'Failed to update cart item';
+				try {
+					final data = jsonDecode(response.body);
+					if (data is Map<String, dynamic> &&
+							data['message'] is String &&
+							(data['message'] as String).isNotEmpty) {
+						message = data['message'] as String;
+					}
+				} catch (_) {}
+				throw Exception(message);
+			}
+		} catch (e) {
+			rethrow;
 		}
 	}
 
 	Future<void> removeCartItem(String productId) async {
-		final response = await http.delete(
-			Uri.parse('${Constants.apiBaseUrl}/cart/$productId'),
-			headers: await _getHeaders(),
-		);
+		try {
+			final response = await http.delete(
+				Uri.parse('${Constants.apiBaseUrl}/cart/$productId'),
+				headers: await _getHeaders(),
+			);
 
-		await _throwIfUnauthorized(response);
+			await _throwIfUnauthorized(response);
 
-		if (response.statusCode != 200) {
-			var message = 'Failed to remove cart item';
-			try {
-				final data = jsonDecode(response.body);
-				if (data is Map<String, dynamic> &&
-						data['message'] is String &&
-						(data['message'] as String).isNotEmpty) {
-					message = data['message'] as String;
-				}
-			} catch (_) {}
-			throw Exception(message);
+			if (response.statusCode != 200) {
+				var message = 'Failed to remove cart item';
+				try {
+					final data = jsonDecode(response.body);
+					if (data is Map<String, dynamic> &&
+							data['message'] is String &&
+							(data['message'] as String).isNotEmpty) {
+						message = data['message'] as String;
+					}
+				} catch (_) {}
+				throw Exception(message);
+			}
+		} catch (e) {
+			rethrow;
 		}
 	}
 
 	Future<void> clearCart() async {
-		final response = await http.delete(
-			Uri.parse('${Constants.apiBaseUrl}/cart'),
-			headers: await _getHeaders(),
-		);
+		try {
+			final response = await http.delete(
+				Uri.parse('${Constants.apiBaseUrl}/cart'),
+				headers: await _getHeaders(),
+			);
 
-		await _throwIfUnauthorized(response);
+			await _throwIfUnauthorized(response);
 
-		if (response.statusCode != 200) {
-			var message = 'Failed to clear cart';
-			try {
-				final data = jsonDecode(response.body);
-				if (data is Map<String, dynamic> &&
-						data['message'] is String &&
-						(data['message'] as String).isNotEmpty) {
-					message = data['message'] as String;
-				}
-			} catch (_) {}
-			throw Exception(message);
+			if (response.statusCode != 200) {
+				var message = 'Failed to clear cart';
+				try {
+					final data = jsonDecode(response.body);
+					if (data is Map<String, dynamic> &&
+							data['message'] is String &&
+							(data['message'] as String).isNotEmpty) {
+						message = data['message'] as String;
+					}
+				} catch (_) {}
+				throw Exception(message);
+			}
+		} catch (e) {
+			rethrow;
 		}
 	}
 
 	Future<Order> placeOrder(String shippingAddress) async {
-		final response = await http.post(
-			Uri.parse('${Constants.apiBaseUrl}/orders'),
-			headers: await _getHeaders(),
-			body: jsonEncode({'shippingAddress': shippingAddress}),
-		);
+		try {
+			final response = await http.post(
+				Uri.parse('${Constants.apiBaseUrl}/orders'),
+				headers: await _getHeaders(),
+				body: jsonEncode({'shippingAddress': shippingAddress}),
+			);
 
-		await _throwIfUnauthorized(response);
+			await _throwIfUnauthorized(response);
 
-		if (response.statusCode != 200) {
-			var message = 'Failed to place order';
-			try {
-				final data = jsonDecode(response.body);
-				if (data is Map<String, dynamic> &&
-						data['message'] is String &&
-						(data['message'] as String).isNotEmpty) {
-					message = data['message'] as String;
-				}
-			} catch (_) {}
-			throw Exception(message);
-		}
-
-		final decoded = jsonDecode(response.body);
-		if (decoded is Map<String, dynamic>) {
-			final dynamic orderData = decoded['order'] ?? decoded['data'] ?? decoded;
-			if (orderData is Map) {
-				return Order.fromJson(orderData.cast<String, dynamic>());
+			if (!(response.statusCode == 200 || response.statusCode == 201)) {
+				var message = 'Failed to place order';
+				try {
+					final data = jsonDecode(response.body);
+					if (data is Map<String, dynamic> &&
+							data['message'] is String &&
+							(data['message'] as String).isNotEmpty) {
+						message = data['message'] as String;
+					}
+				} catch (_) {}
+				throw Exception(message);
 			}
-		}
 
-		throw Exception('Invalid order response');
+			final decoded = jsonDecode(response.body);
+			if (decoded is Map<String, dynamic>) {
+				final dynamic orderData = decoded['order'] ?? decoded['data'] ?? decoded;
+				if (orderData is Map) {
+					return Order.fromJson(orderData.cast<String, dynamic>());
+				}
+			}
+
+			throw Exception('Invalid order response');
+		} catch (e) {
+			rethrow;
+		}
 	}
 
 	Future<List<Order>> getOrders() async {
-		final response = await http.get(
-			Uri.parse('${Constants.apiBaseUrl}/orders'),
-			headers: await _getHeaders(),
-		);
+		try {
+			final response = await http.get(
+				Uri.parse('${Constants.apiBaseUrl}/orders'),
+				headers: await _getHeaders(),
+			);
 
-		await _throwIfUnauthorized(response);
+			await _throwIfUnauthorized(response);
 
-		if (response.statusCode != 200) {
-			var message = 'Failed to fetch orders';
-			try {
-				final data = jsonDecode(response.body);
-				if (data is Map<String, dynamic> &&
-						data['message'] is String &&
-						(data['message'] as String).isNotEmpty) {
-					message = data['message'] as String;
-				}
-			} catch (_) {}
-			throw Exception(message);
-		}
+			if (response.statusCode != 200) {
+				var message = 'Failed to fetch orders';
+				try {
+					final data = jsonDecode(response.body);
+					if (data is Map<String, dynamic> &&
+							data['message'] is String &&
+							(data['message'] as String).isNotEmpty) {
+						message = data['message'] as String;
+					}
+				} catch (_) {}
+				throw Exception(message);
+			}
 
-		final decoded = jsonDecode(response.body);
-		if (decoded is List) {
-			return decoded
-					.map((item) => Order.fromJson((item as Map).cast<String, dynamic>()))
-					.toList();
-		}
-
-		if (decoded is Map<String, dynamic>) {
-			final dynamic listData = decoded['orders'] ?? decoded['data'] ?? decoded['items'];
-			if (listData is List) {
-				return listData
+			final decoded = jsonDecode(response.body);
+			if (decoded is List) {
+				return decoded
 						.map((item) => Order.fromJson((item as Map).cast<String, dynamic>()))
 						.toList();
 			}
-		}
 
-		return <Order>[];
+			if (decoded is Map<String, dynamic>) {
+				final dynamic listData = decoded['orders'] ?? decoded['data'] ?? decoded['items'];
+				if (listData is List) {
+					return listData
+							.map((item) => Order.fromJson((item as Map).cast<String, dynamic>()))
+							.toList();
+				}
+			}
+
+			return <Order>[];
+		} catch (e) {
+			rethrow;
+		}
 	}
 
 	Future<Order> getOrderById(String id) async {
-		final response = await http.get(
-			Uri.parse('${Constants.apiBaseUrl}/orders/$id'),
-			headers: await _getHeaders(),
-		);
+		try {
+			final response = await http.get(
+				Uri.parse('${Constants.apiBaseUrl}/orders/$id'),
+				headers: await _getHeaders(),
+			);
 
-		await _throwIfUnauthorized(response);
+			await _throwIfUnauthorized(response);
 
-		if (response.statusCode != 200) {
-			var message = 'Failed to fetch order';
-			try {
-				final data = jsonDecode(response.body);
-				if (data is Map<String, dynamic> &&
-						data['message'] is String &&
-						(data['message'] as String).isNotEmpty) {
-					message = data['message'] as String;
-				}
-			} catch (_) {}
-			throw Exception(message);
-		}
-
-		final decoded = jsonDecode(response.body);
-		if (decoded is Map<String, dynamic>) {
-			final dynamic orderData = decoded['order'] ?? decoded['data'] ?? decoded;
-			if (orderData is Map) {
-				return Order.fromJson(orderData.cast<String, dynamic>());
+			if (response.statusCode != 200) {
+				var message = 'Failed to fetch order';
+				try {
+					final data = jsonDecode(response.body);
+					if (data is Map<String, dynamic> &&
+							data['message'] is String &&
+							(data['message'] as String).isNotEmpty) {
+						message = data['message'] as String;
+					}
+				} catch (_) {}
+				throw Exception(message);
 			}
-		}
 
-		throw Exception('Invalid order response');
+			final decoded = jsonDecode(response.body);
+			if (decoded is Map<String, dynamic>) {
+				final dynamic orderData = decoded['order'] ?? decoded['data'] ?? decoded;
+				if (orderData is Map) {
+					return Order.fromJson(orderData.cast<String, dynamic>());
+				}
+			}
+
+			throw Exception('Invalid order response');
+		} catch (e) {
+			rethrow;
+		}
 	}
 
 	Future<User> getProfile() async {
-		final response = await http.get(
-			Uri.parse('${Constants.apiBaseUrl}/users/profile'),
-			headers: await _getHeaders(),
-		);
+		try {
+			final response = await http.get(
+				Uri.parse('${Constants.apiBaseUrl}/users/profile'),
+				headers: await _getHeaders(),
+			);
 
-		await _throwIfUnauthorized(response);
+			await _throwIfUnauthorized(response);
 
-		if (response.statusCode != 200) {
-			var message = 'Failed to fetch profile';
-			try {
-				final data = jsonDecode(response.body);
-				if (data is Map<String, dynamic> &&
-						data['message'] is String &&
-						(data['message'] as String).isNotEmpty) {
-					message = data['message'] as String;
-				}
-			} catch (_) {}
-			throw Exception(message);
-		}
-
-		final decoded = jsonDecode(response.body);
-		if (decoded is Map<String, dynamic>) {
-			final dynamic userData = decoded['user'] ?? decoded['data'] ?? decoded;
-			if (userData is Map) {
-				return User.fromJson(userData.cast<String, dynamic>());
+			if (response.statusCode != 200) {
+				var message = 'Failed to fetch profile';
+				try {
+					final data = jsonDecode(response.body);
+					if (data is Map<String, dynamic> &&
+							data['message'] is String &&
+							(data['message'] as String).isNotEmpty) {
+						message = data['message'] as String;
+					}
+				} catch (_) {}
+				throw Exception(message);
 			}
-		}
 
-		throw Exception('Invalid profile response');
+			final decoded = jsonDecode(response.body);
+			if (decoded is Map<String, dynamic>) {
+				final dynamic userData = decoded['user'] ?? decoded['data'] ?? decoded;
+				if (userData is Map) {
+					return User.fromJson(userData.cast<String, dynamic>());
+				}
+			}
+
+			throw Exception('Invalid profile response');
+		} catch (e) {
+			rethrow;
+		}
 	}
 
 	Future<User> updateProfile({String? username, String? phone, String? address}) async {
-		final body = <String, dynamic>{};
-		if (username != null) body['username'] = username;
-		if (phone != null) body['phone'] = phone;
-		if (address != null) body['address'] = address;
+		try {
+			final body = <String, dynamic>{};
+			if (username != null) body['username'] = username;
+			if (phone != null) body['phone'] = phone;
+			if (address != null) body['address'] = address;
 
-		final response = await http.put(
-			Uri.parse('${Constants.apiBaseUrl}/users/profile'),
-			headers: await _getHeaders(),
-			body: jsonEncode(body),
-		);
+			final response = await http.put(
+				Uri.parse('${Constants.apiBaseUrl}/users/profile'),
+				headers: await _getHeaders(),
+				body: jsonEncode(body),
+			);
 
-		await _throwIfUnauthorized(response);
+			await _throwIfUnauthorized(response);
 
-		if (response.statusCode != 200) {
-			var message = 'Failed to update profile';
-			try {
-				final data = jsonDecode(response.body);
-				if (data is Map<String, dynamic> &&
-						data['message'] is String &&
-						(data['message'] as String).isNotEmpty) {
-					message = data['message'] as String;
-				}
-			} catch (_) {}
-			throw Exception(message);
-		}
-
-		final decoded = jsonDecode(response.body);
-		if (decoded is Map<String, dynamic>) {
-			final dynamic userData = decoded['user'] ?? decoded['data'] ?? decoded;
-			if (userData is Map) {
-				return User.fromJson(userData.cast<String, dynamic>());
+			if (response.statusCode != 200) {
+				var message = 'Failed to update profile';
+				try {
+					final data = jsonDecode(response.body);
+					if (data is Map<String, dynamic> &&
+							data['message'] is String &&
+							(data['message'] as String).isNotEmpty) {
+						message = data['message'] as String;
+					}
+				} catch (_) {}
+				throw Exception(message);
 			}
-		}
 
-		throw Exception('Invalid profile response');
+			final decoded = jsonDecode(response.body);
+			if (decoded is Map<String, dynamic>) {
+				final dynamic userData = decoded['user'] ?? decoded['data'] ?? decoded;
+				if (userData is Map) {
+					return User.fromJson(userData.cast<String, dynamic>());
+				}
+			}
+
+			throw Exception('Invalid profile response');
+		} catch (e) {
+			rethrow;
+		}
 	}
 }

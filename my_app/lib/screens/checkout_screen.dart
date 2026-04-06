@@ -12,10 +12,7 @@ import './order_success_screen.dart';
 import '../widgets/nav_transition.dart';
 
 class CheckoutScreen extends StatefulWidget {
-  const CheckoutScreen({super.key, this.items, this.total});
-
-  final List<CartItem>? items;
-  final double? total;
+  const CheckoutScreen({super.key});
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -24,6 +21,7 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _shippingAddressCtrl = TextEditingController();
   bool _didPrefillAddress = false;
+  bool _isLoading = false;
 
   void _showSnack(String msg) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
@@ -48,8 +46,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _didPrefillAddress = true;
     }
 
-    final checkoutItems = widget.items ?? cartProvider.items;
-    final total = widget.total ?? cartProvider.total;
+    final checkoutItems = cartProvider.items;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -82,45 +79,64 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ...checkoutItems.asMap().entries.map((e) => _buildItemRow(e.key, e.value)),
               const SizedBox(height: 20),
               // Order summary
-              _buildOrderSummary(cartProvider, total),
+              _buildOrderSummary(cartProvider),
               const SizedBox(height: 20),
               // Place order button
               ElevatedButton(
-                onPressed: orderProvider.isLoading
+                onPressed: _isLoading
                     ? null
                     : () async {
+                        final cartProviderRead = context.read<CartProvider>();
+                        final checkoutItems = cartProviderRead.items;
+                        final shippingAddress = _shippingAddressCtrl.text.trim();
+
+                        setState(() {
+                          _isLoading = true;
+                        });
+
                         final orderProviderRead = context.read<OrderProvider>();
                         final navigator = Navigator.of(context);
 
                         if (checkoutItems.isEmpty) {
                           _showSnack('Your cart is empty');
+                          setState(() {
+                            _isLoading = false;
+                          });
                           return;
                         }
 
-                        final shippingAddress = _shippingAddressCtrl.text.trim();
                         if (shippingAddress.isEmpty) {
                           _showSnack('Shipping address is required');
+                          setState(() {
+                            _isLoading = false;
+                          });
                           return;
                         }
 
-                        final success = await orderProviderRead
-                            .placeOrder(shippingAddress);
+                        final success =
+                            await orderProviderRead.placeOrder(shippingAddress);
 
-                        if (!mounted) return;
+                        if (!mounted) {
+                          return;
+                        }
 
                         if (success) {
+                          await cartProviderRead.clearCart();
                           final orderNumber =
                               orderProviderRead.currentOrder?.orderNumber ?? '';
                           navigator.pushReplacement(
                             fadeSlideRoute(OrderSuccessScreen(orderNumber: orderNumber)),
                           );
                         } else {
+                          setState(() {
+                            _isLoading = false;
+                          });
                           navigator.pushReplacement(
                             fadeSlideRoute(const OrderFailedScreen()),
                           );
                         }
                       },
-                child: orderProvider.isLoading
+                child: _isLoading
                     ? const SizedBox(
                         width: 20,
                         height: 20,
@@ -241,9 +257,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   // Order summary section
-  Widget _buildOrderSummary(CartProvider cartProvider, double total) {
+  Widget _buildOrderSummary(CartProvider cartProvider) {
     final subtotal = cartProvider.subtotal;
     final shipping = cartProvider.shipping;
+    final total = cartProvider.total;
 
     return Container(
       padding: const EdgeInsets.all(20),

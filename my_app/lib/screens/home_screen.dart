@@ -10,8 +10,6 @@ import '../providers/cart_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import 'product_detail_screen.dart';
-import 'search_screen.dart';
-import '../widgets/nav_transition.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -85,8 +83,6 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 16),
-                _buildSearchBar(),
-                const SizedBox(height: 8),
                 _buildGenreChips(),
                 const SizedBox(height: 32),
                 _buildSectionHeader(),
@@ -137,19 +133,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(width: 8),
       ],
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return TextField(
-      readOnly: true,
-      onTap: () {
-        Navigator.push(context, fadeSlideRoute(const SearchScreen()));
-      },
-      decoration: const InputDecoration(
-        hintText: 'Search for vinyl records, artists...',
-        prefixIcon: Icon(Icons.search),
-      ),
     );
   }
 
@@ -207,6 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (_error != null) {
+      final e = _error;
       return _buildInlineError();
     }
 

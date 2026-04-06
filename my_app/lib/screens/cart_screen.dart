@@ -238,12 +238,7 @@ class _CartScreenState extends State<CartScreen> {
       onPressed: () {
         Navigator.push(
           context,
-          fadeSlideRoute(
-            CheckoutScreen(
-              items: cartProvider.items,
-              total: cartProvider.total,
-            ),
-          ),
+          fadeSlideRoute(const CheckoutScreen()),
         );
       },
       child: const Text('Proceed to Checkout'),
