@@ -137,7 +137,7 @@ class ApiService {
 				}
 			}
 
-			return <Product>[];
+			throw const FormatException('Expected a list of products or an object containing a list sequence, but received an unexpected JSON structure.');
 		} catch (e) {
 			rethrow;
 		}
@@ -211,7 +211,7 @@ class ApiService {
 				}
 			}
 
-			return <CartItem>[];
+			throw const FormatException('Expected cart items list array, but received an unexpected JSON format from the server.');
 		} catch (e) {
 			rethrow;
 		}
@@ -400,7 +400,7 @@ class ApiService {
 				}
 			}
 
-			return <Order>[];
+			throw const FormatException('Expected orders list array, but received an unexpected JSON format from the server.');
 		} catch (e) {
 			rethrow;
 		}

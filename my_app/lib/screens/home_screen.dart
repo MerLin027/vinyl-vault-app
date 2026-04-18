@@ -190,7 +190,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (_error != null) {
-      final e = _error;
       return _buildInlineError();
     }
 

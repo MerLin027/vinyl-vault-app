@@ -36,10 +36,16 @@ class CartItem {
 
 	static String _readProductId(dynamic product) {
 		if (product is Map) {
-			return (product['_id'] ?? '').toString();
+			final id = product['_id'];
+			if (id != null) return id.toString();
+			throw const FormatException('Expected _id inside product object');
 		}
 
-		return (product ?? '').toString();
+		if (product is String) {
+			return product;
+		}
+
+		throw FormatException('Expected product ID or product object, but got: $product');
 	}
 
 	static dynamic _readProductFieldDynamic(dynamic product, String key) {
@@ -67,10 +73,11 @@ class CartItem {
 		}
 
 		if (value is String) {
-			return double.tryParse(value) ?? 0.0;
+			final parsed = double.tryParse(value);
+			if (parsed != null) return parsed;
 		}
 
-		return 0.0;
+		throw FormatException('Expected a numeric price, but received: $value');
 	}
 
 	static int _asInt(dynamic value) {
@@ -83,9 +90,10 @@ class CartItem {
 		}
 
 		if (value is String) {
-			return int.tryParse(value) ?? 0;
+			final parsed = int.tryParse(value);
+			if (parsed != null) return parsed;
 		}
 
-		return 0;
+		throw FormatException('Expected an integer quantity, but received: $value');
 	}
 }

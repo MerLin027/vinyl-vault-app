@@ -20,11 +20,22 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
   final TextEditingController _shippingAddressCtrl = TextEditingController();
-  bool _didPrefillAddress = false;
   bool _isLoading = false;
 
   void _showSnack(String msg) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final address = context.read<UserProvider>().currentUser?.address ?? '';
+      if (address.isNotEmpty) {
+        _shippingAddressCtrl.text = address;
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -35,16 +46,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final cartProvider = context.watch<CartProvider>();
-    final orderProvider = context.watch<OrderProvider>();
-    final userProvider = context.watch<UserProvider>();
-
-    if (!_didPrefillAddress) {
-      final address = userProvider.currentUser?.address ?? '';
-      if (address.isNotEmpty) {
-        _shippingAddressCtrl.text = address;
-      }
-      _didPrefillAddress = true;
-    }
 
     final checkoutItems = cartProvider.items;
 

@@ -59,9 +59,12 @@ class Product {
 		}
 
 		if (value is String) {
-			return double.tryParse(value) ?? 0.0;
+			final parsed = double.tryParse(value);
+			if (parsed != null) {
+				return parsed;
+			}
 		}
 
-		return 0.0;
+		throw FormatException('Expected a numeric value, but received: $value');
 	}
 }
