@@ -9,3 +9,7 @@ my_app/.agent/
 
 # Ignore workflow docs
 /WORKFLOW.md
+
+# Backend
+backend/node_modules/
+backend/.env

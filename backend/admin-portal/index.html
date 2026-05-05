@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VinylVault Admin Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #111111;
+        --surface: #1a1a1a;
+        --accent: #4db8b8;
+        --text: #f5f0e8;
+        --text-secondary: #b8a898;
+        --border: #2a2a2a;
+        --input-bg: #222222;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Jost", sans-serif;
+        background: radial-gradient(circle at 10% 10%, #1a1a1a, var(--bg) 55%);
+        color: var(--text);
+      }
+
+      .shell {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 32px 16px 48px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(28px, 4vw, 42px);
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+
+      .subtitle {
+        margin: 0 0 24px;
+        color: var(--text-secondary);
+      }
+
+      .grid {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      }
+
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+      }
+
+      .panel h2 {
+        margin: 0 0 14px;
+        font-size: 20px;
+        color: var(--accent);
+      }
+
+      .field {
+        margin-bottom: 12px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--text-secondary);
+        font-size: 14px;
+      }
+
+      input,
+      textarea,
+      select,
+      button {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--input-bg);
+        color: var(--text);
+        font: inherit;
+        padding: 10px 12px;
+      }
+
+      textarea {
+        min-height: 110px;
+        resize: vertical;
+      }
+
+      button {
+        background: linear-gradient(135deg, var(--accent), #318f8f);
+        border: none;
+        color: #0f1111;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button:hover {
+        filter: brightness(1.05);
+      }
+
+      .status,
+      .result {
+        margin-top: 10px;
+        font-size: 14px;
+      }
+
+      .status {
+        color: var(--text-secondary);
+      }
+
+      .success {
+        color: #77d9a5;
+      }
+
+      .error {
+        color: #ff8d8d;
+      }
+
+      .preview {
+        margin-top: 12px;
+        width: 100%;
+        max-height: 180px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        display: none;
+      }
+
+      @media (max-width: 700px) {
+        .shell {
+          padding-top: 22px;
+        }
+
+        .panel {
+          padding: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <h1>VinylVault Admin Portal</h1>
+      <p class="subtitle">Upload cover art and add products directly to the VinylVault catalog.</p>
+
+      <section class="grid">
+        <div class="panel">
+          <h2>Upload Image</h2>
+          <div class="field">
+            <label for="imageFile">Select Image</label>
+            <input type="file" id="imageFile" accept="image/*" />
+          </div>
+          <button id="uploadBtn" type="button">Upload</button>
+          <p id="uploadStatus" class="status"></p>
+          <img id="imagePreview" class="preview" alt="Uploaded product preview" />
+        </div>
+
+        <div class="panel">
+          <h2>Add Product</h2>
+          <form id="productForm">
+            <div class="field">
+              <label for="title">Title</label>
+              <input id="title" type="text" required />
+            </div>
+            <div class="field">
+              <label for="artist">Artist</label>
+              <input id="artist" type="text" required />
+            </div>
+            <div class="field">
+              <label for="price">Price</label>
+              <input id="price" type="number" min="0" step="1" required />
+            </div>
+            <div class="field">
+              <label for="genre">Genre</label>
+              <select id="genre" required>
+                <option value="Rock">Rock</option>
+                <option value="Jazz">Jazz</option>
+                <option value="Hip-Hop">Hip-Hop</option>
+                <option value="Electronic">Electronic</option>
+                <option value="Classical">Classical</option>
+                <option value="Pop">Pop</option>
+                <option value="Alternative">Alternative</option>
+                <option value="Indie">Indie</option>
+                <option value="Alternative Rock">Alternative Rock</option>
+                <option value="Indie Rock">Indie Rock</option>
+                <option value="Pop Rock">Pop Rock</option>
+                <option value="Indie Pop">Indie Pop</option>
+                <option value="Synth-pop">Synth-pop</option>
+                <option value="Art Pop">Art Pop</option>
+                <option value="Art Rock">Art Rock</option>
+                <option value="Classic Rock">Classic Rock</option>
+                <option value="Psychedelic Rock">Psychedelic Rock</option>
+                <option value="Psychedelic Pop">Psychedelic Pop</option>
+                <option value="Experimental Rock">Experimental Rock</option>
+                <option value="Ambient Pop">Ambient Pop</option>
+                <option value="Dream Pop">Dream Pop</option>
+                <option value="Slowcore">Slowcore</option>
+                <option value="Alternative R&amp;B">Alternative R&amp;B</option>
+                <option value="R&amp;B">R&amp;B</option>
+                <option value="Lo-fi">Lo-fi</option>
+                <option value="Dark Pop">Dark Pop</option>
+                <option value="Soft Rock">Soft Rock</option>
+                <option value="Folk Pop">Folk Pop</option>
+                <option value="Acoustic Pop">Acoustic Pop</option>
+                <option value="EDM">EDM</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="decade">Decade</label>
+              <select id="decade" required>
+                <option value="1960s">1960s</option>
+                <option value="1970s">1970s</option>
+                <option value="1980s">1980s</option>
+                <option value="1990s">1990s</option>
+                <option value="2000s">2000s</option>
+                <option value="2010s">2010s</option>
+                <option value="2020s">2020s</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="condition">Condition</label>
+              <select id="condition" required>
+                <option value="Mint">Mint</option>
+                <option value="Near Mint">Near Mint</option>
+                <option value="Very Good">Very Good</option>
+                <option value="Good">Good</option>
+                <option value="Fair">Fair</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="rating">Rating</label>
+              <input id="rating" type="number" min="0" max="5" step="0.1" value="4.0" required />
+            </div>
+            <div class="field">
+              <label for="description">Description</label>
+              <textarea id="description"></textarea>
+            </div>
+            <div class="field">
+              <label for="imageUrl">Image URL</label>
+              <input id="imageUrl" type="text" required />
+            </div>
+            <button type="submit">Add Product</button>
+            <p id="formStatus" class="result"></p>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const uploadBtn = document.getElementById("uploadBtn");
+      const uploadStatus = document.getElementById("uploadStatus");
+      const imageFileInput = document.getElementById("imageFile");
+      const imagePreview = document.getElementById("imagePreview");
+      const imageUrlInput = document.getElementById("imageUrl");
+
+      const productForm = document.getElementById("productForm");
+      const formStatus = document.getElementById("formStatus");
+
+      // <!-- REPLACE WITH YOUR CLOUD NAME -->
+      const cloudinaryUploadUrl = "https://api.cloudinary.com/v1_1/djdiahd1j/image/upload";
+
+      uploadBtn.addEventListener("click", async () => {
+        const file = imageFileInput.files[0];
+
+        if (!file) {
+          uploadStatus.textContent = "Please select an image first.";
+          uploadStatus.className = "status error";
+          return;
+        }
+
+        try {
+          uploadStatus.textContent = "Uploading...";
+          uploadStatus.className = "status";
+
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("upload_preset", "vinylvault_admin");
+
+          const response = await fetch(cloudinaryUploadUrl, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error("Upload failed");
+          }
+
+          const data = await response.json();
+          const uploadedUrl = data.secure_url || data.url;
+
+          imageUrlInput.value = uploadedUrl || "";
+          uploadStatus.textContent = "Upload successful";
+          uploadStatus.className = "status success";
+
+          if (uploadedUrl) {
+            imagePreview.src = uploadedUrl;
+            imagePreview.style.display = "block";
+          }
+        } catch (error) {
+          uploadStatus.textContent = "Upload failed";
+          uploadStatus.className = "status error";
+        }
+      });
+
+      productForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        formStatus.textContent = "";
+        formStatus.className = "result";
+
+        const payload = {
+          title: document.getElementById("title").value.trim(),
+          artist: document.getElementById("artist").value.trim(),
+          price: Number(document.getElementById("price").value),
+          genre: document.getElementById("genre").value,
+          decade: document.getElementById("decade").value,
+          condition: document.getElementById("condition").value,
+          rating: Number(document.getElementById("rating").value),
+          description: document.getElementById("description").value.trim(),
+          images: [imageUrlInput.value.trim()],
+        };
+
+        try {
+          const response = await fetch("http://localhost:5000/api/admin/products", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (!response.ok) {
+            throw new Error("Request failed");
+          }
+
+          const product = await response.json();
+          formStatus.textContent = `Product ${product.title} added successfully.`;
+          formStatus.className = "result success";
+
+          productForm.reset();
+          imagePreview.src = "";
+          imagePreview.style.display = "none";
+        } catch (error) {
+          formStatus.textContent = "Failed to add product.";
+          formStatus.className = "result error";
+        }
+      });
+    </script>
+  </body>
+</html>
