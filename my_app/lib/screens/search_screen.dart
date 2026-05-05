@@ -1,18 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../config/theme.dart';
 import '../models/product.dart';
-import '../providers/cart_provider.dart';
 import '../services/api_service.dart';
+import '../widgets/product_card.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
-import './product_detail_screen.dart';
-import '../widgets/nav_transition.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -277,114 +273,6 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // Product search result card
-  Widget _buildSearchCard(Product r) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          fadeSlideRoute(ProductDetailScreen(product: r)),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border, width: 1),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Album art with add-to-cart FAB
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    if (r.images.isNotEmpty)
-                      CachedNetworkImage(
-                        imageUrl: r.images.first,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Shimmer.fromColors(
-                          baseColor: AppColors.surfaceVariant,
-                          highlightColor: AppColors.surface,
-                          child: Container(color: AppColors.surface),
-                        ),
-                        errorWidget: (context, url, error) =>
-                            Container(
-                              color: AppColors.surfaceVariant,
-                              child: const Icon(Icons.error_outline, color: AppColors.textSecondary),
-                            ),
-                      )
-                    else
-                      Container(color: AppColors.surfaceVariant),
-                    Positioned(
-                      bottom: 8,
-                      right: 8,
-                      child: GestureDetector(
-                        onTap: () {
-                          context.read<CartProvider>().addToCart(r.id, 1);
-                        },
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: const BoxDecoration(
-                            color: AppColors.accent,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.add_shopping_cart,
-                              size: 14, color: AppColors.background),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            // Title
-            Text(r.title,
-                style: AppTypography.titleMedium,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
-            Text(r.artist,
-                style: AppTypography.bodySmall,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 4),
-            // Price + condition badge
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text('\$${r.price.toStringAsFixed(2)}',
-                      style: AppTypography.titleMedium
-                          .copyWith(color: AppColors.accent),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                ),
-                const SizedBox(width: 4),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceVariant,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(r.condition,
-                      style: AppTypography.labelSmall
-                          .copyWith(fontWeight: FontWeight.w700)),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildResultsSection() {
     if (_isLoading) {
       return GridView.builder(
@@ -394,7 +282,7 @@ class _SearchScreenState extends State<SearchScreen> {
           crossAxisCount: 2,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: 0.72,
+          childAspectRatio: 0.55,
         ),
         itemCount: 4,
         itemBuilder: (context, index) => Shimmer.fromColors(
@@ -441,10 +329,10 @@ class _SearchScreenState extends State<SearchScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 0.72,
+        childAspectRatio: 0.55,
       ),
       itemCount: _results.length,
-      itemBuilder: (_, i) => _buildSearchCard(_results[i]),
+      itemBuilder: (_, i) => ProductCard(product: _results[i]),
     );
   }
 }

@@ -90,29 +90,40 @@ class _SplashScreenState extends State<SplashScreen>
         if (mounted) _exitController.forward();
       });
 
-      // Master timer: navigate exactly 4.5 s after first frame
-      Future.delayed(const Duration(milliseconds: 4500), () {
-        if (mounted) {
-          final isLoggedIn = context.read<UserProvider>().isLoggedIn;
-          Navigator.pushReplacement(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) =>
-                  isLoggedIn ? const MainScreen() : const LoginScreen(),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) {
-                return FadeTransition(
-                  opacity: animation.drive(
-                    Tween<double>(begin: 0.0, end: 1.0)
-                        .chain(CurveTween(curve: Curves.easeOut)),
-                  ),
-                  child: child,
-                );
-              },
-              transitionDuration: const Duration(milliseconds: 300),
-            ),
-          );
-        }
+      // Master timer: navigate exactly 4.5 s after first frame.
+      // IMPORTANT: We await checkLoginStatus() here rather than relying on
+      // the fire-and-forget call in _VinylVaultRootState.initState(), which
+      // may not have resolved by the time this timer fires.  Awaiting here
+      // guarantees the flutter_secure_storage read has completed and
+      // isLoggedIn reflects the true persisted auth state before we route.
+      Future.delayed(const Duration(milliseconds: 4500), () async {
+        if (!mounted) return;
+
+        // Re-check (or wait for the initial check to complete) to ensure
+        // the token has been read from secure storage before we route.
+        await context.read<UserProvider>().checkLoginStatus();
+
+        if (!mounted) return; // guard again after the await
+
+        final isLoggedIn = context.read<UserProvider>().isLoggedIn;
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                isLoggedIn ? const MainScreen() : const LoginScreen(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation.drive(
+                  Tween<double>(begin: 0.0, end: 1.0)
+                      .chain(CurveTween(curve: Curves.easeOut)),
+                ),
+                child: child,
+              );
+            },
+            transitionDuration: const Duration(milliseconds: 300),
+          ),
+        );
       });
     });
   }

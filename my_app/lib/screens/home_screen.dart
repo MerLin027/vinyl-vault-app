@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../config/theme.dart';
 import '../models/product.dart';
-import '../providers/cart_provider.dart';
 import '../services/api_service.dart';
+import '../widgets/product_card.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
-import 'product_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -217,194 +214,16 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 0.63,
+        childAspectRatio: 0.55,
       ),
       itemBuilder: (context, index) {
-        return _buildProductCard(_products[index]);
+        return ProductCard(product: _products[index]);
       },
     );
   }
 
-  Widget _buildProductCard(Product p) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                ProductDetailScreen(product: p),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              final tween =
-                  Tween(begin: const Offset(1.0, 0.0), end: Offset.zero).chain(
-                CurveTween(curve: Curves.easeOutCubic),
-              );
-              final fadeTween = Tween<double>(begin: 0.0, end: 1.0)
-                  .chain(CurveTween(curve: Curves.easeOut));
-
-              return SlideTransition(
-                position: animation.drive(tween),
-                child: FadeTransition(
-                  opacity: animation.drive(fadeTween),
-                  child: child,
-                ),
-              );
-            },
-            transitionDuration: const Duration(milliseconds: 280),
-            reverseTransitionDuration: const Duration(milliseconds: 220),
-          ),
-        );
-      },
-      child: Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AspectRatio(
-            aspectRatio: 1,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (p.images.isNotEmpty)
-                  ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(14),
-                      topRight: Radius.circular(14),
-                    ),
-                    child: CachedNetworkImage(
-                      imageUrl: p.images.first,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                      placeholder: (context, url) => Shimmer.fromColors(
-                        baseColor: AppColors.surfaceVariant,
-                        highlightColor: AppColors.surface,
-                        child: Container(color: AppColors.surface),
-                      ),
-                      errorWidget: (context, url, error) =>
-                          Container(
-                            color: AppColors.surfaceVariant,
-                            child: const Icon(Icons.error_outline, color: AppColors.textSecondary),
-                          ),
-                    ),
-                  )
-                else
-                  Container(color: AppColors.surfaceVariant),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.4),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.favorite_border,
-                      size: 16,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    _buildBadge(p.genre, primary: true),
-                    const SizedBox(width: 4),
-                    _buildBadge(p.condition, primary: false),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  p.title,
-                  style: AppTypography.titleMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(p.artist,
-                    style: AppTypography.bodySmall,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 8),
-                Text(
-                  p.rating.toStringAsFixed(1),
-                  style: AppTypography.bodySmall.copyWith(fontSize: 12),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '\$${p.price.toStringAsFixed(2)}',
-                      style: AppTypography.titleMedium
-                          .copyWith(color: AppColors.accent),
-                    ),
-                    _buildAddToCartButton(p),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      ),
-    );
-  }
-
-  Widget _buildBadge(String label, {required bool primary}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: primary
-            ? AppColors.accent.withValues(alpha: 0.12)
-            : AppColors.surfaceVariant,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label.toUpperCase(),
-        style: AppTypography.labelSmall.copyWith(
-          fontSize: 10,
-          color: primary ? AppColors.accent : AppColors.textSecondary,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAddToCartButton(Product product) {
-    return Material(
-      color: AppColors.accent,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: () {
-          context.read<CartProvider>().addToCart(product.id, 1);
-        },
-        borderRadius: BorderRadius.circular(8),
-        child: const Padding(
-          padding: EdgeInsets.all(8),
-          child: Icon(
-            Icons.add_shopping_cart,
-            size: 18,
-            color: AppColors.background,
-          ),
-        ),
-      ),
-    );
-  }
+  // _buildProductCard, _buildBadge, and _buildAddToCartButton have been
+  // extracted into lib/widgets/product_card.dart (ProductCard widget).
 
   Widget _buildInlineError() {
     return Padding(
@@ -459,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisCount: 2,
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
-        childAspectRatio: 0.63,
+        childAspectRatio: 0.55,
       ),
       itemBuilder: (context, index) {
         return Shimmer.fromColors(
