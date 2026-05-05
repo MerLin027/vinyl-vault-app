@@ -1,15 +1,58 @@
-# Ignore Agent files
-.agent/
-replace_routes.dart
-my_app/replace_routes.dart
-my_app/.agent/
-
-# Ignore HTML screens
-/screens/
-
-# Ignore workflow docs
-/WORKFLOW.md
-
-# Backend
+# ========================
+# Node.js / Backend
+# ========================
 backend/node_modules/
 backend/.env
+backend/album-covers/
+
+# ========================
+# Flutter / Dart
+# ========================
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+my_app/build/
+my_app/coverage/
+my_app/android/app/debug
+my_app/android/app/profile
+my_app/android/app/release
+
+# Symbolication / Obfuscation
+app.*.symbols
+app.*.map.json
+
+# ========================
+# Workspace / IDE / Misc
+# ========================
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ / VS Code
+*.iml
+*.ipr
+*.iws
+.idea/
+.vscode/
+
+# ========================
+# Agent & Workflow Files
+# ========================
+.agent/
+my_app/.agent/
+replace_routes.dart
+my_app/replace_routes.dart
+/screens/
+/WORKFLOW.md
