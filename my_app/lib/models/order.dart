@@ -30,7 +30,7 @@ class Order {
 				userId = (json['userId'] ?? '').toString(),
 				orderNumber = (json['orderNumber'] ?? '').toString(),
 				items = ((json['items'] as List?) ?? <dynamic>[])
-						.map((item) => OrderItem.fromJson(item as Map<String, dynamic>))
+						.map((item) => OrderItem.fromJson((item as Map).cast<String, dynamic>()))
 						.toList(),
 				shippingAddress = (json['shippingAddress'] ?? '').toString(),
 				subtotal = _asDouble(json['subtotal']),
@@ -58,6 +58,7 @@ class Order {
 	}
 
 	static double _asDouble(dynamic value) {
+		if (value == null) return 0.0;
 		if (value is num) {
 			return value.toDouble();
 		}
@@ -67,7 +68,7 @@ class Order {
 			if (parsed != null) return parsed;
 		}
 
-		throw FormatException('Expected a numeric sum, but received: $value');
+		return 0.0;
 	}
 }
 
@@ -108,6 +109,7 @@ class OrderItem {
 	}
 
 	static double _asDouble(dynamic value) {
+		if (value == null) return 0.0;
 		if (value is num) {
 			return value.toDouble();
 		}
@@ -117,24 +119,26 @@ class OrderItem {
 			if (parsed != null) return parsed;
 		}
 
-		throw FormatException('Expected a numeric price, but received: $value');
+		return 0.0;
 	}
 
 	static String _readProductId(dynamic product) {
+		if (product == null) return '';
 		if (product is Map) {
 			final id = product['_id'];
 			if (id != null) return id.toString();
-			throw const FormatException('Expected _id inside product object');
+			return '';
 		}
 
 		if (product is String) {
 			return product;
 		}
 
-		throw FormatException('Expected product ID sequence, but got: $product');
+		return '';
 	}
 
 	static int _asInt(dynamic value) {
+		if (value == null) return 0;
 		if (value is int) {
 			return value;
 		}
@@ -148,6 +152,6 @@ class OrderItem {
 			if (parsed != null) return parsed;
 		}
 
-		throw FormatException('Expected an integer quantity, but received: $value');
+		return 0;
 	}
 }

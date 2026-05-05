@@ -6,7 +6,6 @@ import '../config/theme.dart';
 import '../providers/user_provider.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import './main_screen.dart';
-import '../widgets/nav_transition.dart'; // ignore: unused_import
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});

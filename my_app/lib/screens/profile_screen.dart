@@ -5,11 +5,13 @@ import '../config/theme.dart';
 import '../providers/cart_provider.dart';
 import '../providers/order_provider.dart';
 import '../providers/user_provider.dart';
+import '../widgets/shared_widgets.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import './login_screen.dart';
 import './edit_profile_screen.dart';
 import './main_screen.dart';
 import '../widgets/nav_transition.dart';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -17,8 +19,7 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
-  bool _isNavigating = false;
+class _ProfileScreenState extends State<ProfileScreen> with NavGuard {
 
   @override
   void initState() {
@@ -34,9 +35,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = context.watch<UserProvider>();
-    final cartProvider = context.watch<CartProvider>();
-    final orderProvider = context.watch<OrderProvider>();
+    // Use context.select so each widget only rebuilds when its specific
+    // slice of provider state changes — not on every notifyListeners() call.
+    final userId = context.select<UserProvider, String?>(
+      (p) => p.currentUser?.id,
+    );
+    final username = context.select<UserProvider, String>(
+      (p) => p.currentUser?.username ?? '',
+    );
+    final email = context.select<UserProvider, String>(
+      (p) => p.currentUser?.email ?? '',
+    );
+    final cartCount = context.select<CartProvider, int>((p) => p.itemCount);
+    final orderCount =
+        context.select<OrderProvider, int>((p) => p.orders.length);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -52,6 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         duration: const Duration(milliseconds: 200),
         switchInCurve: Curves.easeOut,
         child: SafeArea(
+          key: ValueKey(userId ?? 'no-user'),
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 48),
@@ -60,10 +73,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 const SizedBox(height: 24),
                 // Avatar + user info
-                _buildUserHeader(userProvider),
+                _buildUserHeader(username, email),
                 const SizedBox(height: 24),
                 // Stats row
-                _buildStatsRow(orderProvider.orders.length, cartProvider.itemCount),
+                _buildStatsRow(orderCount, cartCount),
                 const SizedBox(height: 24),
                 // Account settings section
                 Text(
@@ -110,17 +123,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _buildMenuItem(
                   icon: Icons.shopping_bag_outlined,
                   label: 'Order History',
-                  badge: '${orderProvider.orders.length}',
-                  onTap: () {
-                    if (_isNavigating) return;
-                    _isNavigating = true;
-                    Future.delayed(const Duration(milliseconds: 300), () {
-                      if (mounted) setState(() => _isNavigating = false);
-                    });
+                  badge: '$orderCount',
+                  onTap: () => guardedNavigate(() {
                     Navigator.push(
                         context,
                         fadeSlideRoute(const MainScreen(initialIndex: 3)));
-                  },
+                  }),
                 ),
                 const SizedBox(height: 8),
                 _buildMenuItem(
@@ -149,27 +157,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.logout,
                   label: 'Log Out',
                   isAccent: true,
-                  onTap: () async {
+                  onTap: () {
                     final userProviderRead = context.read<UserProvider>();
                     final cartProviderRead = context.read<CartProvider>();
                     final orderProviderRead = context.read<OrderProvider>();
                     final navigator = Navigator.of(context);
 
-                    if (_isNavigating) return;
-                    _isNavigating = true;
-                    Future.delayed(const Duration(milliseconds: 300), () {
-                      if (mounted) setState(() => _isNavigating = false);
+                    guardedNavigate(() async {
+                      await userProviderRead.logout();
+                      cartProviderRead.reset();
+                      orderProviderRead.reset();
+
+                      if (!mounted) return;
+
+                      navigator.pushAndRemoveUntil(
+                          fadeSlideRoute(const LoginScreen()),
+                          (route) => false);
                     });
-
-                    await userProviderRead.logout();
-                    cartProviderRead.reset();
-                    orderProviderRead.reset();
-
-                    if (!mounted) return;
-
-                    navigator.pushAndRemoveUntil(
-                        fadeSlideRoute(const LoginScreen()),
-                        (route) => false);
                   },
                 ),
               ],
@@ -181,9 +185,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // Avatar circle + name + email
-  Widget _buildUserHeader(UserProvider userProvider) {
-    final username = userProvider.currentUser?.username ?? '';
-    final email = userProvider.currentUser?.email ?? '';
+  Widget _buildUserHeader(String username, String email) {
     final initial = username.isNotEmpty ? username.characters.first.toUpperCase() : '?';
 
     return Center(
@@ -284,7 +286,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String? badge,
     bool isAccent = false,
   }) {
-    final color = isAccent ? AppColors.accent : AppColors.accent;
+    final color = isAccent ? AppColors.accent : AppColors.textSecondary;
     return GestureDetector(
       onTap: onTap,
       child: Container(

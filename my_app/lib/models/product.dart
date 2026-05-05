@@ -54,6 +54,7 @@ class Product {
 	}
 
 	static double _asDouble(dynamic value) {
+		if (value == null) return 0.0;
 		if (value is num) {
 			return value.toDouble();
 		}
@@ -65,6 +66,6 @@ class Product {
 			}
 		}
 
-		throw FormatException('Expected a numeric value, but received: $value');
+		return 0.0;
 	}
 }

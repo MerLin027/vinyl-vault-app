@@ -76,6 +76,13 @@ class _HomeScreenState extends State<HomeScreen> {
         duration: const Duration(milliseconds: 200),
         switchInCurve: Curves.easeOut,
         child: SafeArea(
+          key: ValueKey(
+            _isLoading
+                ? 'loading'
+                : _error != null
+                    ? 'error'
+                    : 'content',
+          ),
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 48),
@@ -274,8 +281,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       fit: BoxFit.cover,
                       width: double.infinity,
                       height: double.infinity,
+                      placeholder: (context, url) => Shimmer.fromColors(
+                        baseColor: AppColors.surfaceVariant,
+                        highlightColor: AppColors.surface,
+                        child: Container(color: AppColors.surface),
+                      ),
                       errorWidget: (context, url, error) =>
-                          Container(color: AppColors.surfaceVariant),
+                          Container(
+                            color: AppColors.surfaceVariant,
+                            child: const Icon(Icons.error_outline, color: AppColors.textSecondary),
+                          ),
                     ),
                   )
                 else
@@ -320,7 +335,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
-                Text(p.artist, style: AppTypography.bodySmall),
+                Text(p.artist,
+                    style: AppTypography.bodySmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 8),
                 Text(
                   p.rating.toStringAsFixed(1),

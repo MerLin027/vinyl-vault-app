@@ -1,7 +1,15 @@
-class Constants {
-	// Railway (production) — use for physical device testing
-	static const String apiBaseUrl = 'https://vinyl-vault-app-production.up.railway.app/api';
+enum Environment { dev, prod }
 
-	// Local (development) — use for Android emulator
-	// static const String apiBaseUrl = 'http://10.0.2.2:5000/api';
+class Constants {
+	// Set this flag to toggle environments easily
+	static const Environment currentEnvironment = Environment.prod;
+
+	static String get apiBaseUrl {
+		switch (currentEnvironment) {
+			case Environment.dev:
+				return 'http://10.0.2.2:5000/api'; // Local Android emulator
+			case Environment.prod:
+				return 'https://vinyl-vault-app-production.up.railway.app/api';
+		}
+	}
 }

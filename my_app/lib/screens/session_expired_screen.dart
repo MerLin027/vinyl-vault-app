@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
-import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import './login_screen.dart';
 import '../widgets/nav_transition.dart';
 

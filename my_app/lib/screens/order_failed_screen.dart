@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
-import './home_screen.dart';
-import './search_screen.dart';
-import './cart_screen.dart';
-import './order_history_screen.dart';
-import './profile_screen.dart';
-import './checkout_screen.dart';
 import '../widgets/nav_transition.dart';
+import './main_screen.dart';
 class OrderFailedScreen extends StatefulWidget {
   const OrderFailedScreen({super.key});
 
@@ -16,35 +11,7 @@ class OrderFailedScreen extends StatefulWidget {
 }
 
 class _OrderFailedScreenState extends State<OrderFailedScreen> {
-  int _selectedNavIndex = 2;
   bool _isNavigating = false;
-
-  void _onNavTap(int index) {
-    if (index == _selectedNavIndex) return;
-    setState(() => _selectedNavIndex = index);
-    switch (index) {
-      case 0:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const HomeScreen()));
-        break;
-      case 1:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const SearchScreen()));
-        break;
-      case 2:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const CartScreen()));
-        break;
-      case 3:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const OrderHistoryScreen()));
-        break;
-      case 4:
-        Navigator.pushReplacement(
-            context, fadeSlideRoute(const ProfileScreen()));
-        break;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -124,9 +91,9 @@ class _OrderFailedScreenState extends State<OrderFailedScreen> {
                       Future.delayed(const Duration(milliseconds: 300), () {
                         if (mounted) setState(() => _isNavigating = false);
                       });
-                      Navigator.pushReplacement(
-                          context,
-                          fadeSlideRoute(const CheckoutScreen()));
+                      // CheckoutScreen is still on the stack below this screen
+                      // (pushReplacement was used to get here). Pop back to it.
+                      Navigator.pop(context);
                     },
                     child: const Text('Try Again'),
                   ),
@@ -138,9 +105,11 @@ class _OrderFailedScreenState extends State<OrderFailedScreen> {
                       Future.delayed(const Duration(milliseconds: 300), () {
                         if (mounted) setState(() => _isNavigating = false);
                       });
-                      Navigator.pushReplacement(
+                      Navigator.pushAndRemoveUntil(
                           context,
-                          fadeSlideRoute(const CartScreen()));
+                          fadeSlideRoute(const MainScreen(initialIndex: 2)),
+                          (route) => false,
+                      );
                     },
                     child: const Text('Go to Cart'),
                   ),
@@ -149,29 +118,6 @@ class _OrderFailedScreenState extends State<OrderFailedScreen> {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedNavIndex,
-        onTap: _onNavTap,
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.shopping_cart_outlined),
-              activeIcon: Icon(Icons.shopping_cart),
-              label: 'Cart'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_outlined),
-              activeIcon: Icon(Icons.receipt_long),
-              label: 'Orders'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profile'),
-        ],
       ),
     );
   }

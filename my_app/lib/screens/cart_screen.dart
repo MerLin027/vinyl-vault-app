@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../config/theme.dart';
 import '../models/cart_item.dart';
 import '../providers/cart_provider.dart';
+import '../widgets/shared_widgets.dart';
 import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import './checkout_screen.dart';
 import './main_screen.dart';
@@ -41,6 +43,15 @@ class _CartScreenState extends State<CartScreen> {
         duration: const Duration(milliseconds: 200),
         switchInCurve: Curves.easeOut,
         child: SafeArea(
+          key: ValueKey(
+            cartProvider.isLoading
+                ? 'loading'
+                : (cartProvider.error != null && cartProvider.items.isEmpty)
+                    ? 'error'
+                    : cartProvider.items.isEmpty
+                        ? 'empty'
+                        : 'content',
+          ),
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 48),
@@ -52,169 +63,59 @@ class _CartScreenState extends State<CartScreen> {
                   _buildShimmerList(),
                   const SizedBox(height: 20),
                   _buildShimmerSummary(),
-                ] else if (cartProvider.error != null && cartProvider.items.isEmpty) ...[
+                ] else if (cartProvider.error != null &&
+                    cartProvider.items.isEmpty) ...[
                   _buildErrorState(cartProvider),
                 ] else if (cartProvider.items.isEmpty) ...[
                   _buildEmptyState(),
                 ] else ...[
-                  // Cart Items
-                  ...cartProvider.items.map(_buildCartItem),
+                  // Cart Items — each card is a StatelessWidget keyed by
+                  // productId so Flutter can diff and skip unchanged cards.
+                  ...cartProvider.items.map(
+                    (item) => _CartItemCard(
+                      key: ValueKey(item.productId),
+                      item: item,
+                    ),
+                  ),
                   const SizedBox(height: 20),
                   // Order Summary
                   _buildOrderSummary(cartProvider),
                   const SizedBox(height: 20),
                   // Checkout button
-                  _buildCheckoutButton(cartProvider),
+                  _buildCheckoutButton(),
                 ],
               ],
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  // Individual cart item card
-  Widget _buildCartItem(CartItem item) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border, width: 1),
-        ),
-        child: Row(
-          children: [
-            // Album art thumbnail
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: item.imageUrl.isNotEmpty
-                  ? Image.network(
-                      item.imageUrl,
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: 80,
-                        height: 80,
-                        color: AppColors.surfaceVariant,
-                      ),
-                    )
-                  : Container(
-                      width: 80,
-                      height: 80,
-                      color: AppColors.surfaceVariant,
-                    ),
-            ),
-            const SizedBox(width: 16),
-            // Title / artist / price
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(item.title,
-                      style: AppTypography.titleLarge,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 2),
-                  Text(item.artist, style: AppTypography.bodySmall),
-                  const SizedBox(height: 6),
-                    Text('\$${item.price.toStringAsFixed(2)}',
-                      style:
-                          AppTypography.titleMedium.copyWith(color: AppColors.accent)),
-                ],
-              ),
-            ),
-            // Quantity & delete controls
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 22),
-                  color: AppColors.textSecondary,
-                  onPressed: () async {
-                    await context.read<CartProvider>().removeItem(item.productId);
-                  },
-                ),
-                const SizedBox(height: 4),
-                _buildQuantityControl(item),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Quantity stepper
-  Widget _buildQuantityControl(CartItem item) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border, width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          GestureDetector(
-            onTap: () async {
-              if (item.quantity > 1) {
-                await context
-                    .read<CartProvider>()
-                    .updateQuantity(item.productId, item.quantity - 1);
-              }
-            },
-            child: const Icon(Icons.remove, size: 16, color: AppColors.textSecondary),
-          ),
-          const SizedBox(width: 12),
-          Text('${item.quantity}',
-              style: AppTypography.titleMedium),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: () async {
-              await context
-                  .read<CartProvider>()
-                  .updateQuantity(item.productId, item.quantity + 1);
-            },
-            child: const Icon(Icons.add, size: 16, color: AppColors.textSecondary),
-          ),
-        ],
       ),
     );
   }
 
   // Order summary card
   Widget _buildOrderSummary(CartProvider cartProvider) {
-    return Container(
+    return VaultCard(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border, width: 1),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Order Summary', style: AppTypography.headlineMedium),
           const SizedBox(height: 16),
-          // Subtotal row
-          _buildSummaryRow('Subtotal', '\$${cartProvider.subtotal.toStringAsFixed(2)}'),
+          _buildSummaryRow(
+              'Subtotal', '\$${cartProvider.subtotal.toStringAsFixed(2)}'),
           const SizedBox(height: 8),
-          // Shipping row
-          _buildSummaryRow('Shipping', '\$${cartProvider.shipping.toStringAsFixed(2)}'),
+          _buildSummaryRow(
+              'Shipping', '\$${cartProvider.shipping.toStringAsFixed(2)}'),
           const Divider(height: 24),
-          // Total row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Total', style: AppTypography.titleLarge),
-              Text('\$${cartProvider.total.toStringAsFixed(2)}',
-                  style: AppTypography.headlineMedium
-                      .copyWith(color: AppColors.accent)),
+              Text(
+                '\$${cartProvider.total.toStringAsFixed(2)}',
+                style: AppTypography.headlineMedium
+                    .copyWith(color: AppColors.accent),
+              ),
             ],
           ),
         ],
@@ -233,7 +134,7 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   // Proceed to checkout button
-  Widget _buildCheckoutButton(CartProvider cartProvider) {
+  Widget _buildCheckoutButton() {
     return ElevatedButton(
       onPressed: () {
         Navigator.push(
@@ -255,9 +156,10 @@ class _CartScreenState extends State<CartScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                Navigator.pushReplacement(
+                Navigator.pushAndRemoveUntil(
                   context,
                   fadeSlideRoute(const MainScreen(initialIndex: 0)),
+                  (route) => false,
                 );
               },
               child: const Text('Browse Records'),
@@ -297,36 +199,168 @@ class _CartScreenState extends State<CartScreen> {
       children: List.generate(2, (index) {
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
-          child: Shimmer.fromColors(
-            baseColor: AppColors.surfaceVariant,
-            highlightColor: AppColors.surface,
-            child: Container(
-              height: 112,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border, width: 1),
-              ),
-            ),
-          ),
+          child: shimmerBox(height: 112, radius: 14),
         );
       }),
     );
   }
 
   Widget _buildShimmerSummary() {
-    return Shimmer.fromColors(
-      baseColor: AppColors.surfaceVariant,
-      highlightColor: AppColors.surface,
-      child: Container(
-        height: 180,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border, width: 1),
+    return shimmerBox(height: 180, radius: 14);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Extracted StatelessWidget — renders a single cart item card.
+// Using a dedicated widget allows Flutter's element diffing to skip unchanged
+// cards rather than rebuilding all N cards on every CartProvider notification.
+// ---------------------------------------------------------------------------
+class _CartItemCard extends StatelessWidget {
+  const _CartItemCard({required super.key, required this.item});
+
+  final CartItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: VaultCard(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            // Album art thumbnail
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: item.imageUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: item.imageUrl,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Shimmer.fromColors(
+                        baseColor: AppColors.surfaceVariant,
+                        highlightColor: AppColors.surface,
+                        child: Container(color: AppColors.surface),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        width: 80,
+                        height: 80,
+                        color: AppColors.surfaceVariant,
+                        child: const Icon(
+                          Icons.error_outline,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    )
+                  : Container(
+                      width: 80,
+                      height: 80,
+                      color: AppColors.surfaceVariant,
+                    ),
+            ),
+            const SizedBox(width: 16),
+            // Title / artist / price
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: AppTypography.titleLarge,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    item.artist,
+                    style: AppTypography.bodySmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '\$${item.price.toStringAsFixed(2)}',
+                    style: AppTypography.titleMedium
+                        .copyWith(color: AppColors.accent),
+                  ),
+                ],
+              ),
+            ),
+            // Quantity & delete controls
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 22),
+                  color: AppColors.textSecondary,
+                  onPressed: () async {
+                    await context
+                        .read<CartProvider>()
+                        .removeItem(item.productId);
+                  },
+                ),
+                const SizedBox(height: 4),
+                _QuantityControl(item: item),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
+}
 
+// ---------------------------------------------------------------------------
+// Extracted StatelessWidget — quantity stepper for a cart item.
+// ---------------------------------------------------------------------------
+class _QuantityControl extends StatelessWidget {
+  const _QuantityControl({required this.item});
+
+  final CartItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: () async {
+              if (item.quantity > 1) {
+                await context
+                    .read<CartProvider>()
+                    .updateQuantity(item.productId, item.quantity - 1);
+              }
+            },
+            child: const Icon(
+              Icons.remove,
+              size: 16,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text('${item.quantity}', style: AppTypography.titleMedium),
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: () async {
+              await context
+                  .read<CartProvider>()
+                  .updateQuantity(item.productId, item.quantity + 1);
+            },
+            child: const Icon(
+              Icons.add,
+              size: 16,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

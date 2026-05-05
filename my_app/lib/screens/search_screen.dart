@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
@@ -172,10 +173,16 @@ class _SearchScreenState extends State<SearchScreen> {
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
               child: TextField(
                 controller: _searchController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Search albums, artists...',
-                  prefixIcon: Icon(Icons.search),
-                  suffixIcon: Icon(Icons.cancel_outlined),
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.cancel_outlined),
+                    onPressed: () {
+                      _searchController.clear();
+                      _searchProducts();
+                    },
+                  ),
                 ),
                 onChanged: _onSearchChanged,
               ),
@@ -297,11 +304,19 @@ class _SearchScreenState extends State<SearchScreen> {
                   fit: StackFit.expand,
                   children: [
                     if (r.images.isNotEmpty)
-                      Image.network(
-                        r.images.first,
+                      CachedNetworkImage(
+                        imageUrl: r.images.first,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            Container(color: AppColors.surfaceVariant),
+                        placeholder: (context, url) => Shimmer.fromColors(
+                          baseColor: AppColors.surfaceVariant,
+                          highlightColor: AppColors.surface,
+                          child: Container(color: AppColors.surface),
+                        ),
+                        errorWidget: (context, url, error) =>
+                            Container(
+                              color: AppColors.surfaceVariant,
+                              child: const Icon(Icons.error_outline, color: AppColors.textSecondary),
+                            ),
                       )
                     else
                       Container(color: AppColors.surfaceVariant),
@@ -334,15 +349,23 @@ class _SearchScreenState extends State<SearchScreen> {
                 style: AppTypography.titleMedium,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis),
-            Text(r.artist, style: AppTypography.bodySmall),
+            Text(r.artist,
+                style: AppTypography.bodySmall,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
             const SizedBox(height: 4),
             // Price + condition badge
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('\$${r.price.toStringAsFixed(2)}',
-                    style: AppTypography.titleMedium
-                        .copyWith(color: AppColors.accent)),
+                Expanded(
+                  child: Text('\$${r.price.toStringAsFixed(2)}',
+                      style: AppTypography.titleMedium
+                          .copyWith(color: AppColors.accent),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                ),
+                const SizedBox(width: 4),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

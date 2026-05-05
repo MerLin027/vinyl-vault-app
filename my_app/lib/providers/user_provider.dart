@@ -12,6 +12,10 @@ class UserProvider extends ChangeNotifier {
 	bool _isLoggedIn = false;
 	bool _isLoading = false;
 	String? _error;
+	bool _disposed = false;
+	/// Operation lock — prevents concurrent auth calls (e.g. rapid double-tap
+	/// on Login / Sign Up / Save Profile) from firing overlapping requests.
+	bool _isBusy = false;
 
 	UserProvider({AuthService? authService, ApiService? apiService})
 			: _authService = authService ?? AuthService(),
@@ -22,7 +26,30 @@ class UserProvider extends ChangeNotifier {
 	bool get isLoading => _isLoading;
 	String? get error => _error;
 
+	@override
+	void dispose() {
+		_disposed = true;
+		super.dispose();
+	}
+
+	@override
+	void notifyListeners() {
+		if (!_disposed) {
+			super.notifyListeners();
+		}
+	}
+
+	/// Strips the raw Dart "Exception: " prefix so UI error labels only show
+	/// the human-readable message produced by ApiService / AuthService.
+	static String _cleanMessage(Object e) {
+		final raw = e.toString();
+		const prefix = 'Exception: ';
+		return raw.startsWith(prefix) ? raw.substring(prefix.length) : raw;
+	}
+
 	Future<bool> login(String email, String password) async {
+		if (_isBusy) return false;
+		_isBusy = true;
 		_isLoading = true;
 		_error = null;
 		notifyListeners();
@@ -44,9 +71,10 @@ class UserProvider extends ChangeNotifier {
 				_error = (result['message'] ?? 'Login failed').toString();
 			}
 		} catch (e) {
-			_error = e.toString();
+			_error = _cleanMessage(e);
 			success = false;
 		} finally {
+			_isBusy = false;
 			_isLoading = false;
 			notifyListeners();
 		}
@@ -55,6 +83,8 @@ class UserProvider extends ChangeNotifier {
 	}
 
 	Future<bool> signup(String username, String email, String password) async {
+		if (_isBusy) return false;
+		_isBusy = true;
 		_isLoading = true;
 		_error = null;
 		notifyListeners();
@@ -76,9 +106,10 @@ class UserProvider extends ChangeNotifier {
 				_error = (result['message'] ?? 'Signup failed').toString();
 			}
 		} catch (e) {
-			_error = e.toString();
+			_error = _cleanMessage(e);
 			success = false;
 		} finally {
+			_isBusy = false;
 			_isLoading = false;
 			notifyListeners();
 		}
@@ -95,19 +126,34 @@ class UserProvider extends ChangeNotifier {
 	}
 
 	Future<void> loadProfile() async {
+		if (_disposed) return;
+		_isLoading = true;
+		_error = null;
+		notifyListeners();
+
 		try {
 			final user = await _apiService.getProfile();
 			_currentUser = user;
 			_isLoggedIn = true;
 			_error = null;
 		} catch (e) {
-			_error = e.toString();
+			// Profile fetch failed (e.g. network error or 401).
+			// Mark as logged-out so the app doesn't navigate to MainScreen
+			// with a null user and stale isLoggedIn = true.
+			_currentUser = null;
+			_isLoggedIn = false;
+			_error = _cleanMessage(e);
+		} finally {
+			if (!_disposed) {
+				_isLoading = false;
+				notifyListeners();
+			}
 		}
-
-		notifyListeners();
 	}
 
 	Future<bool> updateProfile({String? username, String? phone, String? address}) async {
+		if (_disposed || _isBusy) return false;
+		_isBusy = true;
 		_isLoading = true;
 		_error = null;
 		notifyListeners();
@@ -118,17 +164,18 @@ class UserProvider extends ChangeNotifier {
 				phone: phone,
 				address: address,
 			);
-
 			_currentUser = updatedUser;
 			_error = null;
-			_isLoading = false;
-			notifyListeners();
 			return true;
 		} catch (e) {
-			_error = e.toString();
-			_isLoading = false;
-			notifyListeners();
+			_error = _cleanMessage(e);
 			return false;
+		} finally {
+			_isBusy = false;
+			if (!_disposed) {
+				_isLoading = false;
+				notifyListeners();
+			}
 		}
 	}
 

@@ -127,6 +127,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   // Avatar circle with initials, edit FAB, and subtitle caption
   Widget _buildAvatarSection() {
+    final username = context.read<UserProvider>().currentUser?.username ?? '';
+    final initial = username.isNotEmpty
+        ? username.characters.first.toUpperCase()
+        : '?';
     return Center(
       child: Column(
         children: [
@@ -144,7 +148,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 child: Center(
                   child: Text(
-                    'JD',
+                    initial,
                     style: AppTypography.displayLarge.copyWith(
                       fontSize: 40,
                       fontWeight: FontWeight.w800,

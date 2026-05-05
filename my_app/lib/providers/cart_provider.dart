@@ -9,6 +9,10 @@ class CartProvider extends ChangeNotifier {
 	List<CartItem> _items = <CartItem>[];
 	bool _isLoading = false;
 	String? _error;
+	bool _disposed = false;
+	/// Operation lock — prevents concurrent mutating calls (add/update/remove)
+	/// from racing with each other and the subsequent loadCart refresh.
+	bool _isBusy = false;
 
 	CartProvider({ApiService? apiService}) : _apiService = apiService ?? ApiService();
 
@@ -26,7 +30,29 @@ class CartProvider extends ChangeNotifier {
 
 	double get total => subtotal + shipping;
 
+	@override
+	void dispose() {
+		_disposed = true;
+		super.dispose();
+	}
+
+	@override
+	void notifyListeners() {
+		if (!_disposed) {
+			super.notifyListeners();
+		}
+	}
+
+	/// Strips the raw Dart "Exception: " prefix so UI error labels only show
+	/// the human-readable message produced by ApiService.
+	static String _cleanMessage(Object e) {
+		final raw = e.toString();
+		const prefix = 'Exception: ';
+		return raw.startsWith(prefix) ? raw.substring(prefix.length) : raw;
+	}
+
 	Future<void> loadCart() async {
+		if (_disposed) return;
 		_isLoading = true;
 		_error = null;
 		notifyListeners();
@@ -34,50 +60,71 @@ class CartProvider extends ChangeNotifier {
 		try {
 			_items = await _apiService.getCart();
 		} catch (e) {
-			_error = e.toString();
+			_error = _cleanMessage(e);
 		} finally {
-			_isLoading = false;
-			notifyListeners();
+			if (!_disposed) {
+				_isLoading = false;
+				notifyListeners();
+			}
 		}
 	}
 
 	Future<bool> addToCart(String productId, int quantity) async {
+		if (_disposed || _isBusy) return false;
+		_isBusy = true;
 		try {
 			await _apiService.addToCart(productId, quantity);
 			await loadCart();
 			return true;
 		} catch (e) {
-			_error = e.toString();
-			notifyListeners();
+			if (!_disposed) {
+				_error = _cleanMessage(e);
+				notifyListeners();
+			}
 			return false;
+		} finally {
+			_isBusy = false;
 		}
 	}
 
 	Future<bool> updateQuantity(String productId, int quantity) async {
+		if (_disposed || _isBusy) return false;
+		_isBusy = true;
 		try {
 			await _apiService.updateCartItem(productId, quantity);
 			await loadCart();
 			return true;
 		} catch (e) {
-			_error = e.toString();
-			notifyListeners();
+			if (!_disposed) {
+				_error = _cleanMessage(e);
+				notifyListeners();
+			}
 			return false;
+		} finally {
+			_isBusy = false;
 		}
 	}
 
 	Future<bool> removeItem(String productId) async {
+		if (_disposed || _isBusy) return false;
+		_isBusy = true;
 		try {
 			await _apiService.removeCartItem(productId);
 			await loadCart();
 			return true;
 		} catch (e) {
-			_error = e.toString();
-			notifyListeners();
+			if (!_disposed) {
+				_error = _cleanMessage(e);
+				notifyListeners();
+			}
 			return false;
+		} finally {
+			_isBusy = false;
 		}
 	}
 
 	Future<bool> clearCart() async {
+		if (_disposed) return false;
 		try {
 			await _apiService.clearCart();
 			_items = <CartItem>[];
@@ -85,8 +132,10 @@ class CartProvider extends ChangeNotifier {
 			notifyListeners();
 			return true;
 		} catch (e) {
-			_error = e.toString();
-			notifyListeners();
+			if (!_disposed) {
+				_error = _cleanMessage(e);
+				notifyListeners();
+			}
 			return false;
 		}
 	}

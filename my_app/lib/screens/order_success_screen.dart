@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../config/theme.dart';
 import './main_screen.dart';
@@ -15,6 +17,19 @@ class OrderSuccessScreen extends StatefulWidget {
 
 class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
   bool _isNavigating = false;
+
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+
+  String get _estimatedDelivery {
+    final from = DateTime.now().add(const Duration(days: 3));
+    final to = DateTime.now().add(const Duration(days: 6));
+    final fromStr = '${_months[from.month - 1]} ${from.day}';
+    final toStr = '${_months[to.month - 1]} ${to.day}';
+    return '$fromStr – $toStr';
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,7 +115,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                             size: 16, color: AppColors.textSecondary),
                         const SizedBox(width: 6),
                         Text(
-                          'Estimated delivery: Oct 24 – Oct 27',
+                          'Estimated delivery: $_estimatedDelivery',
                           style: AppTypography.bodySmall,
                         ),
                       ],
@@ -112,13 +127,21 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
               // Vinyl image banner
               ClipRRect(
                 borderRadius: BorderRadius.circular(14),
-                child: Image.network(
-                  'https://lh3.googleusercontent.com/aida-public/AB6AXuCfYNPlEqcUySky1UilBV3gMPY1dE9SFhvHLSYXUWtIfvtEgSKhxM2x7YaO36ahiLYBMFVbnm_qJDmuK1N3oq3xpckIRdIVtipR5inws7rKQTS0KQ_YjhfF_iDnlL2Am3KG4KZiKMO87BUs3bdOJU5578lqNTjHLgxZLLjMKDGEm5IfdFciZL6KW6JMZLl3LfQ2VIm17MlqnF5KpFhY4lARRNYKfkzUeIyeWcL9NW5zEdS8KGwd_RERmJgJBu-FoMkqKJ2CwDMZxpj5',
+                child: CachedNetworkImage(
+                  imageUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCfYNPlEqcUySky1UilBV3gMPY1dE9SFhvHLSYXUWtIfvtEgSKhxM2x7YaO36ahiLYBMFVbnm_qJDmuK1N3oq3xpckIRdIVtipR5inws7rKQTS0KQ_YjhfF_iDnlL2Am3KG4KZiKMO87BUs3bdOJU5578lqNTjHLgxZLLjMKDGEm5IfdFciZL6KW6JMZLl3LfQ2VIm17MlqnF5KpFhY4lARRNYKfkzUeIyeWcL9NW5zEdS8KGwd_RERmJgJBu-FoMkqKJ2CwDMZxpj5',
                   height: 180,
                   width: double.infinity,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      Container(height: 180, color: AppColors.surfaceVariant),
+                  placeholder: (context, url) => Shimmer.fromColors(
+                    baseColor: AppColors.surfaceVariant,
+                    highlightColor: AppColors.surface,
+                    child: Container(height: 180, color: AppColors.surface),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    height: 180,
+                    color: AppColors.surfaceVariant,
+                    child: const Icon(Icons.error_outline, color: AppColors.textSecondary),
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
@@ -130,9 +153,11 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                   Future.delayed(const Duration(milliseconds: 300), () {
                     if (mounted) setState(() => _isNavigating = false);
                   });
-                  Navigator.pushReplacement(
+                  Navigator.pushAndRemoveUntil(
                       context,
-                      fadeSlideRoute(const MainScreen(initialIndex: 0)));
+                      fadeSlideRoute(const MainScreen(initialIndex: 0)),
+                      (route) => false,
+                  );
                 },
                 child: const Text('Continue Shopping'),
               ),
@@ -145,9 +170,11 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                   Future.delayed(const Duration(milliseconds: 300), () {
                     if (mounted) setState(() => _isNavigating = false);
                   });
-                  Navigator.pushReplacement(
+                  Navigator.pushAndRemoveUntil(
                       context,
-                      fadeSlideRoute(const MainScreen(initialIndex: 3)));
+                      fadeSlideRoute(const MainScreen(initialIndex: 3)),
+                      (route) => false,
+                  );
                 },
                 child: const Text('View Orders'),
               ),

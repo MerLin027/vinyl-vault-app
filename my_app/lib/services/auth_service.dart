@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -8,6 +10,7 @@ import '../models/user.dart';
 
 class AuthService {
 	static const String _tokenKey = 'jwt';
+	static const Duration _kTimeout = Duration(seconds: 15);
 
 	final FlutterSecureStorage _storage;
 
@@ -45,7 +48,7 @@ class AuthService {
 					'email': email,
 					'password': password,
 				}),
-			);
+			).timeout(_kTimeout);
 
 			final Map<String, dynamic> data = _decodeBody(response.body);
 
@@ -64,6 +67,16 @@ class AuthService {
 			return {
 				'success': false,
 				'message': _extractMessage(data),
+			};
+		} on SocketException {
+			return {
+				'success': false,
+				'message': 'No internet connection. Please check your network.',
+			};
+		} on TimeoutException {
+			return {
+				'success': false,
+				'message': 'Request timed out. Please try again.',
 			};
 		} catch (_) {
 			return {
@@ -82,7 +95,7 @@ class AuthService {
 					'email': email,
 					'password': password,
 				}),
-			);
+			).timeout(_kTimeout);
 
 			final Map<String, dynamic> data = _decodeBody(response.body);
 
@@ -101,6 +114,16 @@ class AuthService {
 			return {
 				'success': false,
 				'message': _extractMessage(data),
+			};
+		} on SocketException {
+			return {
+				'success': false,
+				'message': 'No internet connection. Please check your network.',
+			};
+		} on TimeoutException {
+			return {
+				'success': false,
+				'message': 'Request timed out. Please try again.',
 			};
 		} catch (_) {
 			return {
@@ -121,9 +144,11 @@ class AuthService {
 					'Content-Type': 'application/json',
 					if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
 				},
-			);
+			).timeout(_kTimeout);
 			success = response.statusCode >= 200 && response.statusCode < 300;
 		} catch (_) {
+			// Network failure is intentionally swallowed — the local token is
+			// always deleted in the finally block regardless of server response.
 			success = false;
 		} finally {
 			await deleteToken();
@@ -137,9 +162,13 @@ class AuthService {
 			return <String, dynamic>{};
 		}
 
-		final decoded = jsonDecode(body);
-		if (decoded is Map<String, dynamic>) {
-			return decoded;
+		try {
+			final decoded = jsonDecode(body);
+			if (decoded is Map<String, dynamic>) {
+				return decoded;
+			}
+		} catch (_) {
+			// Malformed body (e.g. HTML error from a gateway) — treat as empty.
 		}
 
 		return <String, dynamic>{};

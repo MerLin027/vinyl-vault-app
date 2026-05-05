@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -11,6 +13,9 @@ import '../models/user.dart';
 import '../screens/session_expired_screen.dart';
 import 'auth_service.dart';
 
+/// Global request timeout applied to every HTTP call.
+const Duration _kTimeout = Duration(seconds: 15);
+
 class ApiService {
 	static GlobalKey<NavigatorState>? navigatorKey;
 	static bool _isSessionExpiredModalShown = false;
@@ -20,66 +25,89 @@ class ApiService {
 	ApiService({AuthService? authService})
 			: _authService = authService ?? AuthService();
 
+	// ─── Auth helpers ────────────────────────────────────────────────────────
+
 	Future<void> _handleUnauthorized() async {
-		try {
-			final context = navigatorKey?.currentContext;
-			if (context == null) {
-				return;
-			}
+		await _authService.deleteToken();
 
-			await _authService.deleteToken();
+		if (_isSessionExpiredModalShown) return;
 
-			if (_isSessionExpiredModalShown) {
-				return;
-			}
+		final navigator = navigatorKey?.currentState;
+		if (navigator == null) return;
 
-			if (!context.mounted) {
-				return;
-			}
-
-			_isSessionExpiredModalShown = true;
-
-			showDialog<void>(
-				context: context,
-				barrierDismissible: false,
-				builder: (_) => const SessionExpiredScreen(),
-			).whenComplete(() {
-				_isSessionExpiredModalShown = false;
-			});
-		} catch (e) {
-			rethrow;
-		}
+		_isSessionExpiredModalShown = true;
+		navigator.pushAndRemoveUntil(
+			PageRouteBuilder(
+				pageBuilder: (context, animation, secondaryAnimation) =>
+						const SessionExpiredScreen(),
+				transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+						FadeTransition(opacity: animation, child: child),
+				transitionDuration: const Duration(milliseconds: 300),
+			),
+			(route) => false,
+		).whenComplete(() {
+			_isSessionExpiredModalShown = false;
+		});
 	}
 
 	Future<void> _throwIfUnauthorized(http.Response response) async {
-		try {
-			if (response.statusCode == 401) {
-				await _handleUnauthorized();
-				throw Exception('Session expired');
-			}
-		} catch (e) {
-			rethrow;
+		if (response.statusCode == 401) {
+			await _handleUnauthorized();
+			throw Exception('Session expired');
 		}
 	}
 
 	Future<Map<String, String>> _getHeaders({bool requiresAuth = true}) async {
-		try {
-			final headers = <String, String>{
-				'Content-Type': 'application/json',
-			};
+		final headers = <String, String>{
+			'Content-Type': 'application/json',
+		};
 
-			if (requiresAuth) {
-				final token = await _authService.getToken();
-				if (token != null && token.isNotEmpty) {
-					headers['Authorization'] = 'Bearer $token';
-				}
+		if (requiresAuth) {
+			final token = await _authService.getToken();
+			if (token != null && token.isNotEmpty) {
+				headers['Authorization'] = 'Bearer $token';
 			}
-
-			return headers;
-		} catch (e) {
-			rethrow;
 		}
+
+		return headers;
 	}
+
+	// ─── Centralised error classifier ────────────────────────────────────────
+
+	/// Runs [call], adds a [_kTimeout], and maps low-level network exceptions
+	/// (SocketException, HandshakeException, TimeoutException, FormatException)
+	/// to readable messages so the UI never shows raw Dart exception strings.
+	Future<T> _safeRequest<T>(Future<T> Function() call) async {
+		try {
+			return await call().timeout(_kTimeout);
+		} on SocketException {
+			throw Exception('No internet connection. Please check your network and try again.');
+		} on HandshakeException {
+			throw Exception('Secure connection failed. Please try again.');
+		} on TimeoutException {
+			throw Exception('The request timed out. Please try again.');
+		} on FormatException {
+			throw Exception('Received an unexpected response from the server. Please try again.');
+		}
+		// All other exceptions (including our own Exception throws) propagate
+		// naturally to the caller.
+	}
+
+	/// Extracts the server-supplied error message from a non-2xx body, or falls
+	/// back to [fallback].
+	String _extractErrorMessage(String body, String fallback) {
+		try {
+			final data = jsonDecode(body);
+			if (data is Map<String, dynamic> &&
+					data['message'] is String &&
+					(data['message'] as String).isNotEmpty) {
+				return data['message'] as String;
+			}
+		} catch (_) {}
+		return fallback;
+	}
+
+	// ─── Products ────────────────────────────────────────────────────────────
 
 	Future<List<Product>> getProducts({
 		String? genre,
@@ -87,13 +115,11 @@ class ApiService {
 		String? condition,
 		String? search,
 	}) async {
-		try {
+		return _safeRequest(() async {
 			final queryParams = <String, String>{};
 			if (genre != null && genre.isNotEmpty) queryParams['genre'] = genre;
 			if (decade != null && decade.isNotEmpty) queryParams['decade'] = decade;
-			if (condition != null && condition.isNotEmpty) {
-				queryParams['condition'] = condition;
-			}
+			if (condition != null && condition.isNotEmpty) queryParams['condition'] = condition;
 			if (search != null && search.isNotEmpty) queryParams['search'] = search;
 
 			final uri = Uri.parse('${Constants.apiBaseUrl}/products')
@@ -104,20 +130,10 @@ class ApiService {
 				headers: await _getHeaders(requiresAuth: false),
 			);
 
-
 			await _throwIfUnauthorized(response);
 
 			if (response.statusCode != 200) {
-				var message = 'Failed to fetch products';
-				try {
-					final data = jsonDecode(response.body);
-					if (data is Map<String, dynamic> &&
-							data['message'] is String &&
-							(data['message'] as String).isNotEmpty) {
-						message = data['message'] as String;
-					}
-				} catch (_) {}
-				throw Exception(message);
+				throw Exception(_extractErrorMessage(response.body, 'Failed to fetch products'));
 			}
 
 			final decoded = jsonDecode(response.body);
@@ -137,14 +153,12 @@ class ApiService {
 				}
 			}
 
-			throw const FormatException('Expected a list of products or an object containing a list sequence, but received an unexpected JSON structure.');
-		} catch (e) {
-			rethrow;
-		}
+			throw const FormatException('Unexpected JSON structure for products list.');
+		});
 	}
 
 	Future<Product> getProductById(String id) async {
-		try {
+		return _safeRequest(() async {
 			final response = await http.get(
 				Uri.parse('${Constants.apiBaseUrl}/products/$id'),
 				headers: await _getHeaders(requiresAuth: false),
@@ -153,16 +167,7 @@ class ApiService {
 			await _throwIfUnauthorized(response);
 
 			if (response.statusCode != 200) {
-				var message = 'Failed to fetch product';
-				try {
-					final data = jsonDecode(response.body);
-					if (data is Map<String, dynamic> &&
-							data['message'] is String &&
-							(data['message'] as String).isNotEmpty) {
-						message = data['message'] as String;
-					}
-				} catch (_) {}
-				throw Exception(message);
+				throw Exception(_extractErrorMessage(response.body, 'Failed to fetch product'));
 			}
 
 			final decoded = jsonDecode(response.body);
@@ -174,13 +179,13 @@ class ApiService {
 			}
 
 			throw Exception('Invalid product response');
-		} catch (e) {
-			rethrow;
-		}
+		});
 	}
 
+	// ─── Cart ────────────────────────────────────────────────────────────────
+
 	Future<List<CartItem>> getCart() async {
-		try {
+		return _safeRequest(() async {
 			final response = await http.get(
 				Uri.parse('${Constants.apiBaseUrl}/cart'),
 				headers: await _getHeaders(),
@@ -189,16 +194,7 @@ class ApiService {
 			await _throwIfUnauthorized(response);
 
 			if (response.statusCode != 200) {
-				var message = 'Failed to fetch cart';
-				try {
-					final data = jsonDecode(response.body);
-					if (data is Map<String, dynamic> &&
-							data['message'] is String &&
-							(data['message'] as String).isNotEmpty) {
-						message = data['message'] as String;
-					}
-				} catch (_) {}
-				throw Exception(message);
+				throw Exception(_extractErrorMessage(response.body, 'Failed to fetch cart'));
 			}
 
 			final decoded = jsonDecode(response.body);
@@ -211,14 +207,12 @@ class ApiService {
 				}
 			}
 
-			throw const FormatException('Expected cart items list array, but received an unexpected JSON format from the server.');
-		} catch (e) {
-			rethrow;
-		}
+			throw const FormatException('Unexpected JSON structure for cart.');
+		});
 	}
 
 	Future<void> addToCart(String productId, int quantity) async {
-		try {
+		return _safeRequest(() async {
 			final response = await http.post(
 				Uri.parse('${Constants.apiBaseUrl}/cart'),
 				headers: await _getHeaders(),
@@ -229,25 +223,14 @@ class ApiService {
 			);
 
 			await _throwIfUnauthorized(response);
-			if (response.statusCode != 200) {
-				var message = 'Failed to add item to cart';
-				try {
-					final data = jsonDecode(response.body);
-					if (data is Map<String, dynamic> &&
-							data['message'] is String &&
-							(data['message'] as String).isNotEmpty) {
-						message = data['message'] as String;
-					}
-				} catch (_) {}
-				throw Exception(message);
+			if (!(response.statusCode == 200 || response.statusCode == 201)) {
+				throw Exception(_extractErrorMessage(response.body, 'Failed to add item to cart'));
 			}
-		} catch (e) {
-			rethrow;
-		}
+		});
 	}
 
 	Future<void> updateCartItem(String productId, int quantity) async {
-		try {
+		return _safeRequest(() async {
 			final response = await http.put(
 				Uri.parse('${Constants.apiBaseUrl}/cart/$productId'),
 				headers: await _getHeaders(),
@@ -257,24 +240,13 @@ class ApiService {
 			await _throwIfUnauthorized(response);
 
 			if (response.statusCode != 200) {
-				var message = 'Failed to update cart item';
-				try {
-					final data = jsonDecode(response.body);
-					if (data is Map<String, dynamic> &&
-							data['message'] is String &&
-							(data['message'] as String).isNotEmpty) {
-						message = data['message'] as String;
-					}
-				} catch (_) {}
-				throw Exception(message);
+				throw Exception(_extractErrorMessage(response.body, 'Failed to update cart item'));
 			}
-		} catch (e) {
-			rethrow;
-		}
+		});
 	}
 
 	Future<void> removeCartItem(String productId) async {
-		try {
+		return _safeRequest(() async {
 			final response = await http.delete(
 				Uri.parse('${Constants.apiBaseUrl}/cart/$productId'),
 				headers: await _getHeaders(),
@@ -283,24 +255,13 @@ class ApiService {
 			await _throwIfUnauthorized(response);
 
 			if (response.statusCode != 200) {
-				var message = 'Failed to remove cart item';
-				try {
-					final data = jsonDecode(response.body);
-					if (data is Map<String, dynamic> &&
-							data['message'] is String &&
-							(data['message'] as String).isNotEmpty) {
-						message = data['message'] as String;
-					}
-				} catch (_) {}
-				throw Exception(message);
+				throw Exception(_extractErrorMessage(response.body, 'Failed to remove cart item'));
 			}
-		} catch (e) {
-			rethrow;
-		}
+		});
 	}
 
 	Future<void> clearCart() async {
-		try {
+		return _safeRequest(() async {
 			final response = await http.delete(
 				Uri.parse('${Constants.apiBaseUrl}/cart'),
 				headers: await _getHeaders(),
@@ -309,24 +270,15 @@ class ApiService {
 			await _throwIfUnauthorized(response);
 
 			if (response.statusCode != 200) {
-				var message = 'Failed to clear cart';
-				try {
-					final data = jsonDecode(response.body);
-					if (data is Map<String, dynamic> &&
-							data['message'] is String &&
-							(data['message'] as String).isNotEmpty) {
-						message = data['message'] as String;
-					}
-				} catch (_) {}
-				throw Exception(message);
+				throw Exception(_extractErrorMessage(response.body, 'Failed to clear cart'));
 			}
-		} catch (e) {
-			rethrow;
-		}
+		});
 	}
 
+	// ─── Orders ──────────────────────────────────────────────────────────────
+
 	Future<Order> placeOrder(String shippingAddress) async {
-		try {
+		return _safeRequest(() async {
 			final response = await http.post(
 				Uri.parse('${Constants.apiBaseUrl}/orders'),
 				headers: await _getHeaders(),
@@ -336,16 +288,7 @@ class ApiService {
 			await _throwIfUnauthorized(response);
 
 			if (!(response.statusCode == 200 || response.statusCode == 201)) {
-				var message = 'Failed to place order';
-				try {
-					final data = jsonDecode(response.body);
-					if (data is Map<String, dynamic> &&
-							data['message'] is String &&
-							(data['message'] as String).isNotEmpty) {
-						message = data['message'] as String;
-					}
-				} catch (_) {}
-				throw Exception(message);
+				throw Exception(_extractErrorMessage(response.body, 'Failed to place order'));
 			}
 
 			final decoded = jsonDecode(response.body);
@@ -357,13 +300,11 @@ class ApiService {
 			}
 
 			throw Exception('Invalid order response');
-		} catch (e) {
-			rethrow;
-		}
+		});
 	}
 
 	Future<List<Order>> getOrders() async {
-		try {
+		return _safeRequest(() async {
 			final response = await http.get(
 				Uri.parse('${Constants.apiBaseUrl}/orders'),
 				headers: await _getHeaders(),
@@ -372,16 +313,7 @@ class ApiService {
 			await _throwIfUnauthorized(response);
 
 			if (response.statusCode != 200) {
-				var message = 'Failed to fetch orders';
-				try {
-					final data = jsonDecode(response.body);
-					if (data is Map<String, dynamic> &&
-							data['message'] is String &&
-							(data['message'] as String).isNotEmpty) {
-						message = data['message'] as String;
-					}
-				} catch (_) {}
-				throw Exception(message);
+				throw Exception(_extractErrorMessage(response.body, 'Failed to fetch orders'));
 			}
 
 			final decoded = jsonDecode(response.body);
@@ -400,14 +332,12 @@ class ApiService {
 				}
 			}
 
-			throw const FormatException('Expected orders list array, but received an unexpected JSON format from the server.');
-		} catch (e) {
-			rethrow;
-		}
+			throw const FormatException('Unexpected JSON structure for orders list.');
+		});
 	}
 
 	Future<Order> getOrderById(String id) async {
-		try {
+		return _safeRequest(() async {
 			final response = await http.get(
 				Uri.parse('${Constants.apiBaseUrl}/orders/$id'),
 				headers: await _getHeaders(),
@@ -416,16 +346,7 @@ class ApiService {
 			await _throwIfUnauthorized(response);
 
 			if (response.statusCode != 200) {
-				var message = 'Failed to fetch order';
-				try {
-					final data = jsonDecode(response.body);
-					if (data is Map<String, dynamic> &&
-							data['message'] is String &&
-							(data['message'] as String).isNotEmpty) {
-						message = data['message'] as String;
-					}
-				} catch (_) {}
-				throw Exception(message);
+				throw Exception(_extractErrorMessage(response.body, 'Failed to fetch order'));
 			}
 
 			final decoded = jsonDecode(response.body);
@@ -437,13 +358,13 @@ class ApiService {
 			}
 
 			throw Exception('Invalid order response');
-		} catch (e) {
-			rethrow;
-		}
+		});
 	}
 
+	// ─── User ─────────────────────────────────────────────────────────────────
+
 	Future<User> getProfile() async {
-		try {
+		return _safeRequest(() async {
 			final response = await http.get(
 				Uri.parse('${Constants.apiBaseUrl}/users/profile'),
 				headers: await _getHeaders(),
@@ -452,16 +373,7 @@ class ApiService {
 			await _throwIfUnauthorized(response);
 
 			if (response.statusCode != 200) {
-				var message = 'Failed to fetch profile';
-				try {
-					final data = jsonDecode(response.body);
-					if (data is Map<String, dynamic> &&
-							data['message'] is String &&
-							(data['message'] as String).isNotEmpty) {
-						message = data['message'] as String;
-					}
-				} catch (_) {}
-				throw Exception(message);
+				throw Exception(_extractErrorMessage(response.body, 'Failed to fetch profile'));
 			}
 
 			final decoded = jsonDecode(response.body);
@@ -473,13 +385,11 @@ class ApiService {
 			}
 
 			throw Exception('Invalid profile response');
-		} catch (e) {
-			rethrow;
-		}
+		});
 	}
 
 	Future<User> updateProfile({String? username, String? phone, String? address}) async {
-		try {
+		return _safeRequest(() async {
 			final body = <String, dynamic>{};
 			if (username != null) body['username'] = username;
 			if (phone != null) body['phone'] = phone;
@@ -494,16 +404,7 @@ class ApiService {
 			await _throwIfUnauthorized(response);
 
 			if (response.statusCode != 200) {
-				var message = 'Failed to update profile';
-				try {
-					final data = jsonDecode(response.body);
-					if (data is Map<String, dynamic> &&
-							data['message'] is String &&
-							(data['message'] as String).isNotEmpty) {
-						message = data['message'] as String;
-					}
-				} catch (_) {}
-				throw Exception(message);
+				throw Exception(_extractErrorMessage(response.body, 'Failed to update profile'));
 			}
 
 			final decoded = jsonDecode(response.body);
@@ -515,8 +416,6 @@ class ApiService {
 			}
 
 			throw Exception('Invalid profile response');
-		} catch (e) {
-			rethrow;
-		}
+		});
 	}
 }

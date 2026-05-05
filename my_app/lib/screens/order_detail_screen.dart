@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../config/theme.dart';
 import '../models/order.dart';
@@ -115,16 +117,29 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               children: [
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    item.imageUrl,
-                                    width: 72,
-                                    height: 72,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => Container(
-                                        width: 72,
-                                        height: 72,
-                                        color: AppColors.surfaceVariant),
-                                  ),
+                                  child: item.imageUrl.isNotEmpty
+                                      ? CachedNetworkImage(
+                                          imageUrl: item.imageUrl,
+                                          width: 72,
+                                          height: 72,
+                                          fit: BoxFit.cover,
+                                          placeholder: (context, url) => Shimmer.fromColors(
+                                            baseColor: AppColors.surfaceVariant,
+                                            highlightColor: AppColors.surface,
+                                            child: Container(color: AppColors.surface),
+                                          ),
+                                          errorWidget: (context, url, error) => Container(
+                                            width: 72,
+                                            height: 72,
+                                            color: AppColors.surfaceVariant,
+                                            child: const Icon(Icons.error_outline, size: 20, color: AppColors.textSecondary),
+                                          ),
+                                        )
+                                      : Container(
+                                          width: 72,
+                                          height: 72,
+                                          color: AppColors.surfaceVariant,
+                                        ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -133,9 +148,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(item.title,
-                                          style: AppTypography.titleMedium),
+                                          style: AppTypography.titleMedium,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis),
                                       Text(item.artist,
-                                          style: AppTypography.bodySmall),
+                                          style: AppTypography.bodySmall,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis),
                                       const SizedBox(height: 4),
                                         Text('\$${item.price.toStringAsFixed(2)} x ${item.quantity}',
                                           style: AppTypography.titleMedium
@@ -179,8 +198,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   Future.delayed(const Duration(milliseconds: 300), () {
                     if (mounted) setState(() => _isNavigating = false);
                   });
-                    navigator.push(
-                      fadeSlideRoute(const MainScreen(initialIndex: 2)));
+                  navigator.pushAndRemoveUntil(
+                    fadeSlideRoute(const MainScreen(initialIndex: 2)),
+                    (route) => false,
+                  );
                 },
                 child: const Text('Reorder'),
               ),

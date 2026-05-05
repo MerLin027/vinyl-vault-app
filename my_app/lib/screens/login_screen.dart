@@ -54,14 +54,30 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isNavigating = false;
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  late final TapGestureRecognizer _signUpRecognizer;
 
   // Password visibility toggle state
   bool _obscurePassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    _signUpRecognizer = TapGestureRecognizer()
+      ..onTap = () {
+        if (_isNavigating) return;
+        _isNavigating = true;
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted) setState(() => _isNavigating = false);
+        });
+        Navigator.push(context, fadeSlideRoute(const SignupScreen()));
+      };
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _signUpRecognizer.dispose();
     super.dispose();
   }
 
@@ -413,17 +429,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                             ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                if (_isNavigating) return;
-                                _isNavigating = true;
-                                Future.delayed(const Duration(milliseconds: 300), () {
-                                  if (mounted) setState(() => _isNavigating = false);
-                                });
-                                Navigator.push(
-                                  context,
-                                  fadeSlideRoute(const SignupScreen()));
-                              },
+                            recognizer: _signUpRecognizer,
                           ),
                         ],
                       ),

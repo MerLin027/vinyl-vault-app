@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../config/theme.dart';
 import 'main_screen.dart';
+import 'login_screen.dart';
+import '../providers/user_provider.dart';
+import 'package:provider/provider.dart';
 import '../widgets/vinyl_logo.dart';
 import '../widgets/nav_transition.dart'; // ignore: unused_import
 
@@ -90,11 +93,12 @@ class _SplashScreenState extends State<SplashScreen>
       // Master timer: navigate exactly 4.5 s after first frame
       Future.delayed(const Duration(milliseconds: 4500), () {
         if (mounted) {
+          final isLoggedIn = context.read<UserProvider>().isLoggedIn;
           Navigator.pushReplacement(
             context,
             PageRouteBuilder(
               pageBuilder: (context, animation, secondaryAnimation) =>
-                  const MainScreen(),
+                  isLoggedIn ? const MainScreen() : const LoginScreen(),
               transitionsBuilder:
                   (context, animation, secondaryAnimation, child) {
                 return FadeTransition(

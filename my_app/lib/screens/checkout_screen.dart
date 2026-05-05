@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../config/theme.dart';
 import '../models/cart_item.dart';
 import '../providers/cart_provider.dart';
 import '../providers/order_provider.dart';
 import '../providers/user_provider.dart';
-import '../widgets/vinyl_logo.dart'; // ignore: unused_import
 import './order_failed_screen.dart';
 import './order_success_screen.dart';
 import '../widgets/nav_transition.dart';
@@ -45,9 +46,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cartProvider = context.watch<CartProvider>();
-
-    final checkoutItems = cartProvider.items;
+    // Use context.select so the screen only rebuilds when the specific
+    // cart field being rendered actually changes. This prevents full rebuilds
+    // triggered by clearCart()/loadCart() during the async order placement flow.
+    final checkoutItems =
+        context.select<CartProvider, List<CartItem>>((p) => p.items);
+    final subtotal =
+        context.select<CartProvider, double>((p) => p.subtotal);
+    final shipping =
+        context.select<CartProvider, double>((p) => p.shipping);
+    final total = context.select<CartProvider, double>((p) => p.total);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -80,7 +88,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ...checkoutItems.asMap().entries.map((e) => _buildItemRow(e.key, e.value)),
               const SizedBox(height: 20),
               // Order summary
-              _buildOrderSummary(cartProvider),
+              _buildOrderSummary(subtotal: subtotal, shipping: shipping, total: total),
               const SizedBox(height: 20),
               // Place order button
               ElevatedButton(
@@ -175,14 +183,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                imageUrl,
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                    width: 80, height: 80, color: AppColors.surfaceVariant),
-              ),
+              child: imageUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      key: ValueKey(imageUrl),
+                      imageUrl: imageUrl,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Shimmer.fromColors(
+                        baseColor: AppColors.surfaceVariant,
+                        highlightColor: AppColors.surface,
+                        child: Container(color: AppColors.surface),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        width: 80,
+                        height: 80,
+                        color: AppColors.surfaceVariant,
+                        child: const Icon(Icons.error_outline, size: 20, color: AppColors.textSecondary),
+                      ),
+                    )
+                  : Container(
+                      width: 80,
+                      height: 80,
+                      color: AppColors.surfaceVariant,
+                    ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -193,7 +217,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       style: AppTypography.titleLarge,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
-                  Text(artist, style: AppTypography.bodySmall),
+                  Text(artist, 
+                      style: AppTypography.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 6),
                   Text(price,
                       style: AppTypography.titleMedium
@@ -258,10 +285,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   // Order summary section
-  Widget _buildOrderSummary(CartProvider cartProvider) {
-    final subtotal = cartProvider.subtotal;
-    final shipping = cartProvider.shipping;
-    final total = cartProvider.total;
+  Widget _buildOrderSummary({
+    required double subtotal,
+    required double shipping,
+    required double total,
+  }) {
 
     return Container(
       padding: const EdgeInsets.all(20),

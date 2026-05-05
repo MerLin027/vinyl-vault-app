@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -57,6 +58,13 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         duration: const Duration(milliseconds: 200),
         switchInCurve: Curves.easeOut,
         child: SafeArea(
+          key: ValueKey(
+            orderProvider.isLoading
+                ? 'loading'
+                : orderProvider.orders.isEmpty
+                    ? 'empty'
+                    : 'content',
+          ),
           child: orderProvider.isLoading
               ? _buildShimmerList()
               : orderProvider.orders.isEmpty
@@ -185,24 +193,31 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     final extra = order.items.length - thumbs.length;
 
     return SizedBox(
-      width: 64,
+      width: 72,
       height: 64,
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
           for (var i = 0; i < thumbs.length; i++)
             Positioned(
-              left: i * 16,
+              left: i * 14.0,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  thumbs[i],
+                child: CachedNetworkImage(
+                  imageUrl: thumbs[i],
                   width: 36,
                   height: 64,
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
+                  placeholder: (context, url) => Shimmer.fromColors(
+                    baseColor: AppColors.surfaceVariant,
+                    highlightColor: AppColors.surface,
+                    child: Container(color: AppColors.surface),
+                  ),
+                  errorWidget: (context, url, error) => Container(
                     width: 36,
                     height: 64,
                     color: AppColors.surfaceVariant,
+                    child: const Icon(Icons.error_outline, size: 16, color: AppColors.textSecondary),
                   ),
                 ),
               ),
@@ -210,12 +225,14 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           if (extra > 0)
             Positioned(
               right: 0,
+              bottom: 0,
               child: Container(
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
                   color: AppColors.surfaceVariant,
                   borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border, width: 1),
                 ),
                 child: Center(
                   child: Text(
